@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.actions.act_window" id="provider_list_action">
+            <field name="name">Provider</field>
+            <field name="res_model">cloudmanager.provider</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Create the first provider
+                </p>
+            </field>
+        </record>
+
+        <!-- top level menu: no parent -->
+        <menuitem id="main_cloudmanager_menu" name="Cloud Manager"/>
+        <!-- A first level in the left side menu is needed
+             before using action= attribute -->
+        <menuitem id="cloudmanager_menu" name="Cloud Manager"
+                  parent="main_cloudmanager_menu"/>
+        <!-- the following menuitem should appear *after*
+             its parent cloudmanager_menu and *after* its
+             action course_list_action -->
+        <menuitem id="provider_menu" name="Provider" parent="cloudmanager_menu"
+                  action="provider_list_action"/>
+    </data>
+</openerp>
+
+
