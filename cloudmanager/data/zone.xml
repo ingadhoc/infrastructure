@@ -1,0 +1,42 @@
+<openerp>
+    <data>
+        <record model="cloudmanager.zone" id="asia-east1-a">
+            <field name="name">asia-east1-a</field>
+        </record>
+        <record model="cloudmanager.zone" id="asia-east1-b">
+            <field name="name">asia-east1-b</field>
+        </record>
+        <record model="cloudmanager.zone" id="asia-east1-c">
+            <field name="name">asia-east1-c</field>
+        </record>
+        <record model="cloudmanager.zone" id="europe-west1-b">
+            <field name="name">europe-west1-b</field>
+        </record>
+        <record model="cloudmanager.zone" id="europe-west1-c">
+            <field name="name">europe-west1-c</field>
+        </record>
+        <record model="cloudmanager.zone" id="europe-west1-d">
+            <field name="name">europe-west1-d</field>
+        </record>
+        <record model="cloudmanager.zone" id="us-central1-a">
+            <field name="name">us-central1-a</field>
+        </record>
+        <record model="cloudmanager.zone" id="us-central1-b">
+            <field name="name">us-central1-b</field>
+        </record>
+        <record model="cloudmanager.zone" id="us-central1-c">
+            <field name="name">us-central1-c</field>
+        </record>
+        <record model="cloudmanager.zone" id="us-central1-d">
+            <field name="name">us-central1-d</field>
+        </record>
+        <record model="cloudmanager.zone" id="us-east1-b">
+            <field name="name">us-east1-b</field>
+        </record>
+        <record model="cloudmanager.zone" id="us-east1-c">
+            <field name="name">us-east1-c</field>
+        </record>
+        <record model="cloudmanager.zone" id="us-east1-d">
+            <field name="name">us-east1-d</field>
+        </record>
+</openerp>

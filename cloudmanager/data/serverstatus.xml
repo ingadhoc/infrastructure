@@ -1,0 +1,25 @@
+<openerp>
+    <data>
+        <record model="cloudmanager.serverstatus" id="Initial Configuration">
+            <field name="name">Initial Configuration</field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="Waiting for Deployment">
+            <field name="name">Waiting for Deployment</field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="Active">
+            <field name="name">Active</field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="Waiting for Script Action">
+            <field name="name">Waiting for Script Action</field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="Waiting for Stop">
+            <field name="name">Waiting for Stop</field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="Waiting for Delete">
+            <field name="name">Waiting for Delete</field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="Waiting for Script Action">
+            <field name="name">Waiting for Script Action</field>
+        </record>
+    </data>
+</openerp>
