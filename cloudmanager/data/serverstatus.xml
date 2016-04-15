@@ -18,8 +18,11 @@
         <record model="cloudmanager.serverstatus" id="Waiting for Delete">
             <field name="name">Waiting for Delete</field>
         </record>
-        <record model="cloudmanager.serverstatus" id="Waiting for Script Action">
-            <field name="name">Waiting for Script Action</field>
+        <record model="cloudmanager.serverstatus" id="Waiting for Reboot">
+            <field name="name">Waiting for Reboot</field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="Stopped">
+            <field name="name">Stopped</field>
         </record>
     </data>
 </openerp>
