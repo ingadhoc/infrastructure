@@ -1,3 +1,0 @@
-"id","create_uid/id","create_date","ftNotes","write_uid/id","write_date","name"
-"__export__.cloudmanager_serverstatus_1","base.user_root","2016-04-14 22:31:11","Server is being configured or has been removed from the cloud.","base.user_root","2016-04-14 22:31:11","Initial Setup"
-"__export__.cloudmanager_serverstatus_2","base.user_root","2016-04-14 22:32:01","Transitional state: Waiting for server to be deployed to the cloud.","base.user_root","2016-04-14 22:32:01","Being Deployed"

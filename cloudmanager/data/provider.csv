@@ -1,3 +1,0 @@
-"id","create_uid/id","create_date","fcAPIPasswd","fcAPIURL","fcAPIUser","fcMainURL","ftCreateTemplate","ftDeleteTemplate","ftNotes","ftStartTemplate","ftStopTemplate","write_uid/id","write_date","name"
-"__export__.cloudmanager_provider_1","base.user_root","2016-04-14 22:33:40","empty","empty","empty","empty","empty","empty","testing","empty","empty","base.user_root","2016-04-14 22:33:40","Google Compute Engine"
-"__export__.cloudmanager_provider_2","base.user_root","2016-04-14 22:54:31","empty","empty","empty","empty","empty","empty","testing","emtpy","empty","base.user_root","2016-04-14 22:54:31","Digital Ocean Droplet"

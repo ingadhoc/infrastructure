@@ -2,12 +2,13 @@
 {
     'name': "Cloud Manager",
 
-    'summary': """ Odoo SaaS Cloud Manager""",
+    'summary': """ The Cloud Manager helps you create and manage a hybrid set of virtual machines.""",
 
     'description': """
 		Create and manage Google Compute Engine VM and Digital Ocean Droplet (and similar vendor)
-		 Odoo instances for an Odoo SaaS Company.
+		 instances for any purpose including running a SaaS company.
 		Provide for "High Availability (HA)" and "Disaster recovery (DR)" via remote datacenter warm backup systems.
+		Provide modular script template facilities for managing your virtual servers alone or in groups using action buttons.
     """,
 
     'author': "Gary Wallis of Unixservice, LLC. for AdHoc SA",
@@ -29,10 +30,10 @@
         'views/machinetype.xml',
         'views/image.xml',
 	'data/provider.xml',
-	#'data/serverstatus.csv',
-	#'data/zone.csv',
-	#'data/machinetype.csv',
-	#'data/image.csv',
+	'data/serverstatus.xml',
+	'data/machinetype.xml',
+	'data/image.xml',
+	'data/zone.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

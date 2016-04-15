@@ -2,9 +2,11 @@
     <data>
         <record model="cloudmanager.provider" id="Google Compute Engine VM">
             <field name="name">Google Compute Engine VM</field>
+            <field name="id">1</field>
         </record>
         <record model="cloudmanager.provider" id="DigitalOcean Droplet">
             <field name="name">DigitalOcean Droplet</field>
+            <field name="id">2</field>
         </record>
     </data>
 </openerp>

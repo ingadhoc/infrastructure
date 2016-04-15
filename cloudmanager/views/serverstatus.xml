@@ -12,7 +12,7 @@
             </field>
         </record>
 
-        <menuitem id="serverstatus_menu" name="Server" parent="cloudmanager_menu"
+        <menuitem id="serverstatus_menu" name="Server Status" parent="cloudmanager_menu"
                   action="serverstatus_list_action"/>
     </data>
 </openerp>
