@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.actions.act_window" id="zone_list_action">
+            <field name="name">Zone</field>
+            <field name="res_model">cloudmanager.zone</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Create the first zone
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="zone_menu" name="Zone" parent="cloudmanager_menu"
+                  action="zone_list_action"/>
+    </data>
+</openerp>
+
+

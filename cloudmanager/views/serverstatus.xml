@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.actions.act_window" id="serverstatus_list_action">
+            <field name="name">Server Status</field>
+            <field name="res_model">cloudmanager.serverstatus</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Create the first server status
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="serverstatus_menu" name="Server" parent="cloudmanager_menu"
+                  action="serverstatus_list_action"/>
+    </data>
+</openerp>
+
+
