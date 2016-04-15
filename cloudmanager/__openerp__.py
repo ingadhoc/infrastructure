@@ -14,7 +14,7 @@
     'website': "http://www.adhoc.com.ar",
 
     'category': 'Uncategorized',
-    'version': '8.0.0.0.2',
+    'version': '8.0.1.0.0',
 
     # any module necessary for this one to work correctly
     'depends': ['base'],
@@ -22,9 +22,17 @@
     # always loaded
     'data': [
         # 'security/ir.model.access.csv',
-        'templates.xml',
         'views/provider.xml',
         'views/server.xml',
+        'views/serverstatus.xml',
+        'views/zone.xml',
+        'views/machinetype.xml',
+        'views/image.xml',
+	'data/provider.xml',
+	#'data/serverstatus.csv',
+	#'data/zone.csv',
+	#'data/machinetype.csv',
+	#'data/image.csv',
     ],
     # only loaded in demonstration mode
     'demo': [
