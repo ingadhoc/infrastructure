@@ -1,0 +1,10 @@
+<openerp>
+    <data>
+        <record model="cloudmanager.provider" id="Google Cloud Engine VM">
+            <field name="name">Google Cloud Computing</field>
+        </record>
+        <record model="cloudmanager.provider" id="DigitalOcean Droplet">
+            <field name="name">DigitalOcean Droplet</field>
+        </record>
+    </data>
+</openerp>
