@@ -76,5 +76,17 @@
             <field name="name">Amsterdam 3</field>
             <field name="fm2oProvider" ref="DigitalOcean Droplet"/>
         </record>
+	<record model="ir.ui.view" id="zone_tree_view">
+	    <field name="name">zone.tree.view</field>
+	    <field name="model">cloudmanager.zone</field>
+	    <field name="type">tree</field>
+	    <field name="arch" type="xml">
+			<tree string="Zone/Geographical Region">
+				<field name="name"/> 
+				<field name="fm2oProvider" /> 
+				<field name="ftNotes" /> 
+			</tree>
+	    </field>
+	</record>
     </data>
 </openerp>

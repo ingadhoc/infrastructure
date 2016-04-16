@@ -2,11 +2,28 @@
     <data>
         <record model="cloudmanager.provider" id="Google Compute Engine VM">
             <field name="name">Google Compute Engine VM</field>
-            <field name="id">1</field>
+	    <field name ="ftNotes">Google Cloud Platform Compute Engine is the very long name of this Google VM service.
+The VMs are also referred to as instances.
+Main web app: https://console.cloud.google.com/compute
+	    </field>
         </record>
         <record model="cloudmanager.provider" id="DigitalOcean Droplet">
             <field name="name">DigitalOcean Droplet</field>
-            <field name="id">2</field>
+	    <field name ="ftNotes">DigitalOcean has a much simpler and terse VM nomenclature.
+Droplets are just VMs.
+Main web app: https://cloud.digitalocean.com
+	    </field>
         </record>
+	<record model="ir.ui.view" id="provider_tree_view">
+	    <field name="name">provider.tree.view</field>
+	    <field name="model">cloudmanager.provider</field>
+	    <field name="type">tree</field>
+	    <field name="arch" type="xml">
+			<tree string="Cloud Provider">
+				<field name="name"/> 
+				<field name="ftNotes" /> 
+			</tree>
+	    </field>
+	</record>
     </data>
 </openerp>
