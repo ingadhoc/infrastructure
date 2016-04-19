@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="deployvm_form_view">
+            <field name="name">deployvm.form</field>
+            <field name="model">cloudmanager.deployvm</field>
+            <field name="arch" type="xml">
+                <form string="Deploy VM Instance">
+                    <group>
+                        <field name="session_id"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <act_window id="launch_session_deployvm"
+                    name="Deploy VM Instance"
+                    src_model="cloudmanager.server"
+                    res_model="cloudmanager.deployvm"
+                    view_mode="form"
+                    target="new"
+                    key2="client_action_multi"/>
+    </data>
+</openerp>
