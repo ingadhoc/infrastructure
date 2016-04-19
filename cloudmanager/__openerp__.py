@@ -29,6 +29,7 @@
         'views/zone.xml',
         'views/machinetype.xml',
         'views/image.xml',
+        'views/deployvm.xml',
 	'data/provider.xml',
 	'data/serverstatus.xml',
 	'data/machinetype.xml',
