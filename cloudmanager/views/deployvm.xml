@@ -7,8 +7,14 @@
             <field name="arch" type="xml">
                 <form string="Deploy VM Instance">
                     <group>
-                        <field name="session_id"/>
+                        <field name="server_id"/>
                     </group>
+                    <footer>
+                        <button name="deployvm" type="object"
+                                string="Deploy VM" class="oe_highlight"/>
+                        or
+                        <button special="cancel" string="Cancel"/>
+                    </footer>
                 </form>
             </field>
         </record>

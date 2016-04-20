@@ -11,18 +11,19 @@
 		Provide modular script template facilities for managing your virtual servers alone or in groups using action buttons.
     """,
 
-    'author': "Gary Wallis of Unixservice, LLC. for AdHoc SA",
+    'author': "AdHoc SA. By Gary Wallis of Unixservice, LLC.",
     'website': "http://www.adhoc.com.ar",
 
     'category': 'Uncategorized',
     'version': '8.0.1.0.0',
 
     # any module necessary for this one to work correctly
-    'depends': ['base'],
+    'depends': ['base','board'],
 
     # always loaded
     'data': [
         # 'security/ir.model.access.csv',
+        'views/cloudmanager.xml',
         'views/provider.xml',
         'views/server.xml',
         'views/serverstatus.xml',
@@ -35,6 +36,7 @@
 	'data/machinetype.xml',
 	'data/image.xml',
 	'data/zone.xml',
+	'data/server.xml',
     ],
     # only loaded in demonstration mode
     'demo': [

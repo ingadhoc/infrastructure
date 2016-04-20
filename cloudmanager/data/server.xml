@@ -1,0 +1,97 @@
+<openerp>
+    <data>
+        <record model="cloudmanager.server" id="mx0">
+            <field name="name">mx0</field>
+            <field name ="fcServerFQDN">mx0.acme.net</field>
+            <field name ="ftNotes">postfix incoming mx gateway mail server</field>
+            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="fm2oServerStatus" ref="Initial Setup"/>
+            <field name ="fcRamSize">1GB</field>
+            <field name ="fcDiskSize">200GB-SSD</field>
+            <field name ="fm2oMachineType" ref="n1-standard-1"/>
+            <field name ="fm2oImage" ref="ubuntu-1510-wily-v20160405"/>
+            <field name ="fm2oZone" ref="us-central1-a"/>
+            <field name ="fcTimeZone">EST5EDT</field>
+        </record>
+        <record model="cloudmanager.server" id="mx1">
+            <field name="name">mx1</field>
+            <field name ="fcServerFQDN">mx1.acme.net</field>
+            <field name ="ftNotes">postfix incoming mx gateway mail server</field>
+            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="fm2oServerStatus" ref="Active"/>
+            <field name ="fcRamSize">1GB</field>
+            <field name ="fcDiskSize">200GB-SSD</field>
+            <field name ="fm2oMachineType" ref="n1-standard-1"/>
+            <field name ="fm2oImage" ref="ubuntu-1510-wily-v20160405"/>
+            <field name ="fm2oZone" ref="us-central1-a"/>
+            <field name ="fcTimeZone">EST5EDT</field>
+        </record>
+        <record model="cloudmanager.server" id="smtp0">
+            <field name="name">smtp0</field>
+            <field name ="fcServerFQDN">smtp0.acme.net</field>
+            <field name ="ftNotes">postfix outgoing smtp relay mail server</field>
+            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="fm2oServerStatus" ref="Active"/>
+            <field name ="fcRamSize">1GB</field>
+            <field name ="fcDiskSize">200GB-SSD</field>
+            <field name ="fm2oMachineType" ref="n1-standard-1"/>
+            <field name ="fm2oImage" ref="ubuntu-1510-wily-v20160405"/>
+            <field name ="fm2oZone" ref="us-central1-a"/>
+            <field name ="fcTimeZone">EST5EDT</field>
+        </record>
+        <record model="cloudmanager.server" id="smtp1">
+            <field name="name">smtp1</field>
+            <field name ="fcServerFQDN">smtp1.acme.net</field>
+            <field name ="ftNotes">postfix outgoing smtp relay mail server</field>
+            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="fm2oServerStatus" ref="Waiting for Deployment"/>
+            <field name ="fcRamSize">1GB</field>
+            <field name ="fcDiskSize">200GB-SSD</field>
+            <field name ="fm2oMachineType" ref="n1-standard-1"/>
+            <field name ="fm2oImage" ref="ubuntu-1510-wily-v20160405"/>
+            <field name ="fm2oZone" ref="us-central1-a"/>
+            <field name ="fcTimeZone">EST5EDT</field>
+        </record>
+        <record model="cloudmanager.server" id="store0">
+            <field name="name">store0</field>
+            <field name ="fcServerFQDN">store0.acme.net</field>
+            <field name ="ftNotes">a-j postfix smtp pop mail store server</field>
+            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="fm2oServerStatus" ref="Active"/>
+            <field name ="fcRamSize">1GB</field>
+            <field name ="fcDiskSize">200GB-SSD</field>
+            <field name ="fm2oMachineType" ref="n1-standard-1"/>
+            <field name ="fm2oImage" ref="ubuntu-1510-wily-v20160405"/>
+            <field name ="fm2oZone" ref="us-central1-a"/>
+            <field name ="fcTimeZone">EST5EDT</field>
+        </record>
+        <record model="cloudmanager.server" id="store1">
+            <field name="name">store1</field>
+            <field name ="fcServerFQDN">store1.acme.net</field>
+            <field name ="ftNotes">k-z postfix smtp pop mail store server</field>
+            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="fm2oServerStatus" ref="Stopped"/>
+            <field name ="fcRamSize">1GB</field>
+            <field name ="fcDiskSize">200GB-SSD</field>
+            <field name ="fm2oMachineType" ref="n1-standard-1"/>
+            <field name ="fm2oImage" ref="ubuntu-1510-wily-v20160405"/>
+            <field name ="fm2oZone" ref="us-central1-a"/>
+            <field name ="fcTimeZone">EST5EDT</field>
+        </record>
+
+	<record model="ir.ui.view" id="server_tree_view">
+	    <field name="name">server.tree.view</field>
+	    <field name="model">cloudmanager.server</field>
+	    <field name="type">tree</field>
+	    <field name="arch" type="xml">
+			<tree string="Server">
+				<field name="name"/> 
+				<field name="ftNotes" /> 
+				<field name="fm2oProvider" /> 
+				<field name="fm2oServerStatus" /> 
+			</tree>
+	    </field>
+	</record>
+
+    </data>
+</openerp>

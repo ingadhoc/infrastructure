@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- top level module menu and dashboard -->
+
+<openerp>
+    <data>
+	<record model="ir.actions.act_window" id="trans_vms_view">
+            <field name="name">Transitional State VMs</field>
+            <field name="res_model">cloudmanager.server</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('fm2oServerStatus','>',3)]</field>
+	</record>
+	<record model="ir.actions.act_window" id="ops_panel_view">
+            <field name="name">End State VMs</field>
+            <field name="res_model">cloudmanager.server</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('fm2oServerStatus','&lt;=',3)]</field>
+	</record>
+	<record model="ir.ui.view" id="cloudmanager_dashboard_set">
+            <field name="name">Cloud Manager Dashboard Form1</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cloud Manager Transitional State VMs">
+                    <hpaned>
+                        <child1>
+                            <action string="Transitional State VMs" name="%(trans_vms_view)d" colspan="2" />                          
+                        </child1>
+                        <child2>
+                            <action string="OPs End State VMs" name="%(ops_panel_view)d" colspan="2" />                          
+                        </child2>
+                    </hpaned>
+                </form>
+            </field>
+	</record>
+	<record model="ir.actions.act_window" id="cloudmanager_dashboard">
+            <field name="name">Cloud Manager Dashboard</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="usage">menu</field>
+            <field name="cloudmanager_dashboard_set" ref="cloudmanager_dashboard_set" />
+	</record>
+
+	<!-- top level menu: no parent -->
+	<menuitem id="main_cloudmanager_menu" name="Cloud Manager"/>
+	<!-- A first level in the left side menu is needed before using action= attribute -->
+	<menuitem id="cloudmanager_menu" name="Cloud Manager" parent="main_cloudmanager_menu"/>
+
+	<!-- dashboard -->
+        <menuitem id="dashboard_menu" name="Dashboard" parent="cloudmanager_menu" action="cloudmanager_dashboard"/>
+    </data>
+</openerp>

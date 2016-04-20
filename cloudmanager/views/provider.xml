@@ -12,15 +12,6 @@
             </field>
         </record>
 
-        <!-- top level menu: no parent -->
-        <menuitem id="main_cloudmanager_menu" name="Cloud Manager"/>
-        <!-- A first level in the left side menu is needed
-             before using action= attribute -->
-        <menuitem id="cloudmanager_menu" name="Cloud Manager"
-                  parent="main_cloudmanager_menu"/>
-        <!-- the following menuitem should appear *after*
-             its parent cloudmanager_menu and *after* its
-             action course_list_action -->
         <menuitem id="provider_menu" name="Provider" parent="cloudmanager_menu"
                   action="provider_list_action"/>
     </data>
