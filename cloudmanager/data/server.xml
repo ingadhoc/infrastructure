@@ -79,19 +79,5 @@
             <field name ="fcTimeZone">EST5EDT</field>
         </record>
 
-	<record model="ir.ui.view" id="server_tree_view">
-	    <field name="name">server.tree.view</field>
-	    <field name="model">cloudmanager.server</field>
-	    <field name="type">tree</field>
-	    <field name="arch" type="xml">
-			<tree string="Server">
-				<field name="name"/> 
-				<field name="ftNotes" /> 
-				<field name="fm2oProvider" /> 
-				<field name="fm2oServerStatus" /> 
-			</tree>
-	    </field>
-	</record>
-
     </data>
 </openerp>

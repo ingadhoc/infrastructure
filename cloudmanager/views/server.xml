@@ -1,6 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openerp>
     <data>
+
+        <record model="ir.ui.view" id="server_tree_view">
+            <field name="name">server.tree.view</field>
+            <field name="model">cloudmanager.server</field>
+            <field name="arch" type="xml">
+                <tree string="Server">
+                    <field name="name"/> 
+                    <field name="ftNotes" /> 
+                    <field name="fm2oProvider" /> 
+                    <field name="fm2oServerStatus" /> 
+                    <field name="state"/> 
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="server_form_view">
+            <field name="name">server.form.view</field>
+            <field name="model">cloudmanager.server</field>
+            <field name="arch" type="xml">
+                <form string="Server">
+                    <header>
+                        <button name="deploy_server" states="draft" string="Deploy" type="object"/>
+                        <button name="to_draft" states="deployed" string="To Draft" type="object"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="name"/> 
+                            <field name="fm2oProvider"/> 
+                            <field name="ftNotes"/> 
+                            <field name="fm2oMachineType" domain="[('fm2oProvider', '=', fm2oProvider)]"/> 
+                            <field name="fm2oServerStatus"/> 
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
         <record model="ir.actions.act_window" id="server_list_action">
             <field name="name">Server</field>
             <field name="res_model">cloudmanager.server</field>
