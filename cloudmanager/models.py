@@ -110,7 +110,7 @@ class Server(models.Model):
     @api.constrains('fm2oMachineType', 'fm2oProvider')
     def check_machine_type(self):
         if self.fm2oMachineType.fm2oProvider != self.fm2oProvider:
-            raise Warning('Machine Type Provider must be of server provider')
+            raise Warning('Machine Type Provider must be of selected server provider')
 
     @api.onchange('fm2oProvider')
     def onchange_provider(self):
