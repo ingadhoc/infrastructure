@@ -9,8 +9,15 @@
                 <tree string="Server">
                     <field name="name"/> 
                     <field name="ftNotes" /> 
+                    <field name="fcServerFQDN" /> 
                     <field name="fm2oProvider" /> 
                     <field name="fm2oServerStatus" /> 
+                    <field name="fm2oMachineType" /> 
+                    <field name="fm2oImage" /> 
+                    <field name="fm2oZone" /> 
+                    <field name="fcTimeZone" /> 
+                    <field name="fcDiskSize" /> 
+                    <field name="fcRamSize" /> 
                     <field name="state"/> 
                 </tree>
             </field>
@@ -22,17 +29,23 @@
             <field name="arch" type="xml">
                 <form string="Server">
                     <header>
-                        <button name="deploy_server" states="draft" string="Deploy" type="object"/>
-                        <button name="to_draft" states="deployed" string="To Draft" type="object"/>
+                        <button name="to_ready" states="draft" string="To Ready" type="object"/>
+                        <button name="to_draft" states="ready" string="To Draft" type="object"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
                         <group>
                             <field name="name"/> 
-                            <field name="fm2oProvider"/> 
+                            <field name="fcServerFQDN" /> 
                             <field name="ftNotes"/> 
-                            <field name="fm2oMachineType" domain="[('fm2oProvider', '=', fm2oProvider)]"/> 
+                            <field name="fm2oProvider"/> 
                             <field name="fm2oServerStatus"/> 
+                            <field name="fm2oMachineType" domain="[('fm2oProvider', '=', fm2oProvider)]"/> 
+                            <field name="fm2oImage" domain="[('fm2oProvider', '=', fm2oProvider)]"/> 
+                            <field name="fm2oZone" domain="[('fm2oProvider', '=', fm2oProvider)]"/> 
+                            <field name="fcTimeZone" /> 
+                            <field name="fcDiskSize" /> 
+                            <field name="fcRamSize" /> 
                         </group>
                     </sheet>
                 </form>

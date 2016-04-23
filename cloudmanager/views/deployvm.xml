@@ -5,13 +5,10 @@
             <field name="name">deployvm.form</field>
             <field name="model">cloudmanager.deployvm</field>
             <field name="arch" type="xml">
-                <form string="Deploy VM Instance">
-                    <group>
-                        <field name="server_id"/>
-                    </group>
+                <form string="Deploy VM Instance(s)">
                     <footer>
                         <button name="deployvm" type="object"
-                                string="Deploy VM" class="oe_highlight"/>
+                                string="Deploy VMs" class="oe_highlight"/>
                         or
                         <button special="cancel" string="Cancel"/>
                     </footer>
@@ -20,7 +17,7 @@
         </record>
 
         <act_window id="launch_session_deployvm"
-                    name="Deploy VM Instance"
+                    name="Deploy VM Instance(s)"
                     src_model="cloudmanager.server"
                     res_model="cloudmanager.deployvm"
                     view_mode="form"

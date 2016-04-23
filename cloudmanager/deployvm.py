@@ -14,15 +14,28 @@ class DeployVM(models.TransientModel):
 
     @api.multi
     def deployvm(self):
-        print 'self.env.context', self.env.context
-        print 'self.env.uid', self.env.uid
-        print 'self.env.cr', self.env.cr
+        #print 'self.env.context', self.env.context
+        #print 'self.env.uid', self.env.uid
+        #print 'self.env.cr', self.env.cr
         active_ids = self.env.context.get('active_ids', [])
         if not active_ids:
             return True
         servers = self.env['cloudmanager.server'].browse(active_ids)
         for server in servers:
-        #call the deploy method  in the ProviderAPI class
-            _logger.error('server_id %s', server.id)
-        return {}
+            #call the deploy method  in the ProviderAPI class
+            #validate
+            server.state='draft';
+            if not server.name:
+                return False
+            if not server.ftNotes:
+                return False
+            if not server.fm2oProvider:
+                return False
+            if not server.fm2oMachineType:
+                return False
+            if not server.fm2oServerStatus:
+                return False
+            server.state='ready';
+            _logger.info('server_id %s', server.id)
+        return True
 

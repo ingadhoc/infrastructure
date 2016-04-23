@@ -69,34 +69,34 @@ class Server(models.Model):
     _description='The server instance'
     name=fields.Char(required=True, readonly=True, states={'draft': [('readonly', False)]},
             help="Provider name of the instance/droplet or VM server")
-    fcServerFQDN=fields.Char( string="fcServerFQDN", required=False,
+    fcServerFQDN=fields.Char( string="fcServerFQDN", required=True,
             help="FQDN DNS name of the instance/droplet or VM server")
-    fcDiskSize=fields.Char( string="fcDiskSize",required=False,
+    fcDiskSize=fields.Char( string="fcDiskSize",required=True,
             help="Disk size, usually related to fcMachineType, also may include disk type like SSD. For informational purposes only.")
-    fcRamSize=fields.Char( string="fcRamSize",required=False,
-            help="Ram size, usually related to fcMachineType for informational purposes only.")
-    fcTimeZone=fields.Char( string="fcTimeZone",required=False,
-            help="Linux time zone name")
-    ftNotes=fields.Text( string="ftNotes", required=False,
+    fcRamSize=fields.Char( string="fcRamSize",required=True,
+            help="Ram size, usually related to fm2oMachineType for informational purposes only.")
+    fcTimeZone=fields.Char( string="fcTimeZone",required=True,
+            help="Linux time zone name",default='EST5EDT')
+    ftNotes=fields.Text( string="ftNotes", required=True,
             help="Freeform details regarding this server")
-    fm2oProvider=fields.Many2one('cloudmanager.provider',required=False,string="fm2oProvider",
-            help="The provider this server is using")
-    fm2oMachineType=fields.Many2one('cloudmanager.machinetype',required=False,string="fm2oMachineType",
+    fm2oProvider=fields.Many2one('cloudmanager.provider',required=True,string="fm2oProvider",
+            help="The provider this server is using",default=1)
+    fm2oMachineType=fields.Many2one('cloudmanager.machinetype',required=True,string="fm2oMachineType",
             help="The machine type this server is using")
-    fm2oImage=fields.Many2one('cloudmanager.image',required=False,string="fm2oImage",
+    fm2oImage=fields.Many2one('cloudmanager.image',required=True,string="fm2oImage",
             help="The OS image this server is using")
-    fm2oZone=fields.Many2one('cloudmanager.zone',required=False,string="fm2oZone",
+    fm2oZone=fields.Many2one('cloudmanager.zone',required=True,string="fm2oZone",
             help="The zone or geographical region this server is assigned to")
-    fm2oServerStatus=fields.Many2one('cloudmanager.serverstatus',required=False,string="fm2oServerStatus",
-            help="The status of the server")
+    fm2oServerStatus=fields.Many2one('cloudmanager.serverstatus',required=True,string="fm2oServerStatus",
+            help="The status of the server",default=1)
     # se tiene que llamar state
     state = fields.Selection([
-        ('draft', 'Draft'), ('deployed', 'Deployed')],
+        ('draft', 'Draft'), ('ready','Ready')],
         string='State', required=True, default='draft',)
 
     _sql_constraints = [
-        ('fcServerFQDN_unique', 'unique(fcServerFQDN)',
-            'fcServerFQDN must be unique per server'),
+        ('fcServerFQDN_unique', 'UNIQUE(fcServerFQDN)', 'fcServerFQDN must be unique'),
+        ('name', 'UNIQUE(name)', 'name must be unique'),
     ]
 
     # @api.multi
@@ -110,7 +110,11 @@ class Server(models.Model):
     @api.constrains('fm2oMachineType', 'fm2oProvider')
     def check_machine_type(self):
         if self.fm2oMachineType.fm2oProvider != self.fm2oProvider:
-            raise Warning('Machine Type Provider must be of selected server provider')
+            raise ValidationError('Machine Type Provider must be of selected server provider')
+        if self.fm2oImage.fm2oProvider != self.fm2oProvider:
+            raise ValidationError('Image Provider must be of selected server provider')
+        if self.fm2oZone.fm2oProvider != self.fm2oProvider:
+            raise ValidationError('Image Provider must be of selected server provider')
 
     @api.onchange('fm2oProvider')
     def onchange_provider(self):
@@ -127,5 +131,16 @@ class Server(models.Model):
         # self.state = 'draft'
 
     @api.multi
-    def deploy_server(self):
-        self.write({'state': 'deployed'})
+    def to_ready(self):
+        if not server.name:
+            return False
+        if not server.ftNotes:
+            return False
+        if not server.fm2oProvider:
+            return False
+        if not server.fm2oMachineType:
+            return False
+        if not server.fm2oServerStatus:
+            return False
+        self.write({'state': 'ready'})
+        return True
