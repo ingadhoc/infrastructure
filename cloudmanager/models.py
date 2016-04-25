@@ -2,6 +2,7 @@
 
 from openerp import models, fields, api
 from openerp.exceptions import ValidationError 
+from requests import requests
 
 class Provider(models.Model):
     _name='cloudmanager.provider'
@@ -135,28 +136,20 @@ class Server(models.Model):
     def to_ready(self):
         if self.state != 'draft':
             raise ValidationError('Can not change to ready VMs that are not in the workflow draft state')
-            return False
         if not self.name:
             raise ValidationError('VM must have a name')
-            return False
         if not self.ftNotes:
             raise ValidationError('VM must have notes')
-            return False
         if not self.fm2oProvider:
             raise ValidationError('VM must have provider')
-            return False
         if not self.fm2oMachineType:
             raise ValidationError('VM must have machine type')
-            return False
         if not self.fm2oImage:
             raise ValidationError('VM must have an OS image ')
-            return False
         if not self.fm2oZone:
             raise ValidationError('VM must have a provider zone')
-            return False
         if self.fm2oServerStatus.id != 1:
             raise ValidationError('VM must be at Initial Setup VM state')
-            return False
         self.write({'state':'ready'})
         return True
 
@@ -164,23 +157,25 @@ class Server(models.Model):
     def deployvm(self):
         if self.state != 'ready':
             raise ValidationError('Can not deploy VMs that are not in workflow ready state')
+        if not self.fm2oProvider.fcAPIPasswd:
+            raise ValidationError('VM provider must have bearer token fcAPIPasswd defined')
+        if not self.fm2oProvider.fcAPIURL:
+            raise ValidationError('VM provider must have an API URL defined')
         if not self.ftNotes:
             raise ValidationError('VM must have notes')
-            return False
         if not self.fm2oImage:
             raise ValidationError('VM must have an OS image ')
-            return False
         if not self.fm2oZone:
             raise ValidationError('VM must have a provider zone')
-            return False
         if not self.fm2oProvider:
             raise ValidationError('VM must have a provider')
-            return False
         if not self.fm2oMachineType:
             raise ValidationError('VM must have a machine type')
-            return False
         if self.fm2oServerStatus.id != 1:
-            raise ValidationError(self.fm2oServerStatus.id)
-            return False
+            raise ValidationError('VM must be at Initial Setup VM state')
+        Authorization = "Bearer " + str(self.fm2oProvider.fcAPIPasswd)
+        h = {"Content-Type": "application/json","Authorization": Authorization}
+        r = requests.get(self.fm2oProvider.fcAPIURL,headers=h)
+        raise ValidationError(r.text)
         self.write({'state':'deployed','fm2oServerStatus':'4'})
         return True

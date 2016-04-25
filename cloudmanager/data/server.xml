@@ -78,6 +78,19 @@
             <field name ="fm2oZone" ref="us-central1-a"/>
             <field name ="fcTimeZone">EST5EDT</field>
         </record>
+        <record model="cloudmanager.server" id="dev0">
+            <field name="name">dev0</field>
+            <field name ="fcServerFQDN">dev0.acme.net</field>
+            <field name ="ftNotes">Development server</field>
+            <field name="fm2oProvider" ref="DigitalOcean Droplet"/>
+            <field name="fm2oServerStatus" ref="Initial Setup"/>
+            <field name ="fcRamSize">512MB</field>
+            <field name ="fcDiskSize">10GB-SSD</field>
+            <field name ="fm2oMachineType" ref="Size $5"/>
+            <field name ="fm2oImage" ref="Ubuntu5-10x64"/>
+            <field name ="fm2oZone" ref="New York 1"/>
+            <field name ="fcTimeZone">EST5EDT</field>
+        </record>
 
     </data>
 </openerp>
