@@ -3,6 +3,7 @@
 from openerp import models, fields, api
 from openerp.exceptions import ValidationError 
 from requests import requests
+from string import Template
 
 class Provider(models.Model):
     _name='cloudmanager.provider'
@@ -91,6 +92,10 @@ class Server(models.Model):
             help="The zone or geographical region this server is assigned to")
     fm2oServerStatus=fields.Many2one('cloudmanager.serverstatus',required=True,string="fm2oServerStatus",
             help="The status of the server",default=1)
+    fcProviderID=fields.Char( string="fcProviderID",required=False,readonly=True,
+        help="Cloud provider ID assigned on VM creation")
+    fcServerIPv4=fields.Char( string="fcServerIPv4",required=False,readonly=True,
+        help="Cloud provider assigned public IPv4 number")
     # se tiene que llamar state
     state = fields.Selection([
         ('draft', 'Draft'), ('ready','Ready'), ('deployed','Deployed')],
@@ -136,6 +141,12 @@ class Server(models.Model):
     def to_ready(self):
         if self.state != 'draft':
             raise ValidationError('Can not change to ready VMs that are not in the workflow draft state')
+        if not self.fm2oProvider.fcAPIPasswd:
+            raise ValidationError('VM provider must have bearer token fcAPIPasswd defined')
+        if not self.fm2oProvider.fcCreateTemplate:
+            raise ValidationError('VM provider must have fcCreateTemplate defined')
+        if not self.fm2oProvider.fcAPIURL:
+            raise ValidationError('VM provider must have an API URL defined')
         if not self.name:
             raise ValidationError('VM must have a name')
         if not self.ftNotes:
@@ -153,12 +164,23 @@ class Server(models.Model):
         self.write({'state':'ready'})
         return True
 
+    ##
+    # deployvm
+    #   uses cloud provider API to create a running VM
+    #   uses DNS provider API to create an A record for VM
+    # notes
+    #   initial development: we need to find out when we get the IP number back
+    #   from different cloud provider APIs
     @api.multi
     def deployvm(self):
+        ##
+        #Start Validate
         if self.state != 'ready':
             raise ValidationError('Can not deploy VMs that are not in workflow ready state')
         if not self.fm2oProvider.fcAPIPasswd:
             raise ValidationError('VM provider must have bearer token fcAPIPasswd defined')
+        if not self.fm2oProvider.fcCreateTemplate:
+            raise ValidationError('VM provider must have fcCreateTemplate defined')
         if not self.fm2oProvider.fcAPIURL:
             raise ValidationError('VM provider must have an API URL defined')
         if not self.ftNotes:
@@ -172,10 +194,34 @@ class Server(models.Model):
         if not self.fm2oMachineType:
             raise ValidationError('VM must have a machine type')
         if self.fm2oServerStatus.id != 1:
-            raise ValidationError('VM must be at Initial Setup VM state')
+            raise ValidationError('VM must be at Initial Setup VM status')
+        #end Validate
+        ##
+
+        ##
+        #Start request VM creation
         Authorization = "Bearer " + str(self.fm2oProvider.fcAPIPasswd)
         h = {"Content-Type": "application/json","Authorization": Authorization}
-        r = requests.get(self.fm2oProvider.fcAPIURL,headers=h)
+        t = Template(self.fm2oProvider.fcCreateTemplate)
+        #this depends on provider and template, since we use safe sub we can use provider prefixed mapping
+        #for API dependent name value pairs
+        d = t.safe_substitute(name=self.fcServerFQDN,size=self.fcRamSize,image=self.fm2oImage.name,zone=self.fm2oZone.name);
+        r = requests.post(self.fm2oProvider.fcAPIURL,headers=h,data=d)
         raise ValidationError(r.text)
+        #get provider ID
+        #if valid ID we can place server in waiting for deploy server status
         self.write({'state':'deployed','fm2oServerStatus':'4'})
+        #end Start request VM creation
+        ##
+
+
+        #we must check later (depends on provider?) to change server status to active
+        #schedule check creation and get IP number etc
+        self.write({'state':'deployed','fm2oServerStatus':'4'})
+
+        ##
+        #start DNS API
+        #post DNS A zone creation request
+        #end DNS API
+        ##
         return True
