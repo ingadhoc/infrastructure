@@ -11,7 +11,7 @@
 		Provide modular script template facilities for managing your virtual servers alone or in groups using action buttons.
     """,
 
-    'author': "AdHoc SA. By Gary Wallis of Unixservice, LLC.",
+    'author': "AdHoc S.A. Gary Wallis for Unixservice, LLC.",
     'website': "http://www.adhoc.com.ar",
 
     'category': 'Uncategorized',

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from openerp import models, fields, api
+from openerp.exceptions import ValidationError 
 
 class Provider(models.Model):
     _name='cloudmanager.provider'
@@ -91,7 +92,7 @@ class Server(models.Model):
             help="The status of the server",default=1)
     # se tiene que llamar state
     state = fields.Selection([
-        ('draft', 'Draft'), ('ready','Ready')],
+        ('draft', 'Draft'), ('ready','Ready'), ('deployed','Deployed')],
         string='State', required=True, default='draft',)
 
     _sql_constraints = [
@@ -132,15 +133,54 @@ class Server(models.Model):
 
     @api.multi
     def to_ready(self):
-        if not server.name:
+        if self.state != 'draft':
+            raise ValidationError('Can not change to ready VMs that are not in the workflow draft state')
             return False
-        if not server.ftNotes:
+        if not self.name:
+            raise ValidationError('VM must have a name')
             return False
-        if not server.fm2oProvider:
+        if not self.ftNotes:
+            raise ValidationError('VM must have notes')
             return False
-        if not server.fm2oMachineType:
+        if not self.fm2oProvider:
+            raise ValidationError('VM must have provider')
             return False
-        if not server.fm2oServerStatus:
+        if not self.fm2oMachineType:
+            raise ValidationError('VM must have machine type')
             return False
-        self.write({'state': 'ready'})
+        if not self.fm2oImage:
+            raise ValidationError('VM must have an OS image ')
+            return False
+        if not self.fm2oZone:
+            raise ValidationError('VM must have a provider zone')
+            return False
+        if self.fm2oServerStatus.id != 1:
+            raise ValidationError('VM must be at Initial Setup VM state')
+            return False
+        self.write({'state':'ready'})
+        return True
+
+    @api.multi
+    def deployvm(self):
+        if self.state != 'ready':
+            raise ValidationError('Can not deploy VMs that are not in workflow ready state')
+        if not self.ftNotes:
+            raise ValidationError('VM must have notes')
+            return False
+        if not self.fm2oImage:
+            raise ValidationError('VM must have an OS image ')
+            return False
+        if not self.fm2oZone:
+            raise ValidationError('VM must have a provider zone')
+            return False
+        if not self.fm2oProvider:
+            raise ValidationError('VM must have a provider')
+            return False
+        if not self.fm2oMachineType:
+            raise ValidationError('VM must have a machine type')
+            return False
+        if self.fm2oServerStatus.id != 1:
+            raise ValidationError(self.fm2oServerStatus.id)
+            return False
+        self.write({'state':'deployed','fm2oServerStatus':'4'})
         return True
