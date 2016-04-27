@@ -12,6 +12,19 @@
             </field>
         </record>
 
+	<record model="ir.ui.view" id="provider_tree_view">
+	    <field name="name">provider.tree.view</field>
+	    <field name="model">cloudmanager.provider</field>
+	    <field name="type">tree</field>
+	    <field name="arch" type="xml">
+			<tree string="Cloud Provider">
+				<field name="name"/> 
+				<field name="ftNotes" /> 
+				<field name="id" /> 
+			</tree>
+	    </field>
+	</record>
+
         <menuitem id="provider_menu" name="Provider" parent="cloudmanager_menu"
                   action="provider_list_action"/>
     </data>

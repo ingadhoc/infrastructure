@@ -87,7 +87,7 @@
             <field name ="fcRamSize">512MB</field>
             <field name ="fcDiskSize">10GB-SSD</field>
             <field name ="fm2oMachineType" ref="Size $5"/>
-            <field name ="fm2oImage" ref="Ubuntu5-10x64"/>
+            <field name ="fm2oImage" ref="ubuntu-15-10-x64"/>
             <field name ="fm2oZone" ref="New York 1"/>
             <field name ="fcTimeZone">EST5EDT</field>
         </record>

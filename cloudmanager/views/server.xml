@@ -16,8 +16,6 @@
                     <field name="fm2oImage" /> 
                     <field name="fm2oZone" /> 
                     <field name="fcTimeZone" /> 
-                    <field name="fcDiskSize" /> 
-                    <field name="fcRamSize" /> 
                     <field name="state"/> 
                 </tree>
             </field>
@@ -31,7 +29,7 @@
                     <header>
                         <button name="to_ready" states="draft" string="To Ready" type="object" 
                             help="Change state to ready to deploy"/>
-                        <button name="to_draft" states="ready" string="To Draft" type="object"
+                        <button name="to_draft" states="ready,deployed" string="To Draft" type="object"
                             help="Return to draft state for further configuration. Can not be already deployed"/>
                         <button name="deployvm" states="ready" string="Deploy VM" type="object"
                             help="Connect to provider and start VM as configured"/>
@@ -40,6 +38,8 @@
                     <sheet>
                         <group>
                             <field name="name"/> 
+                            <field name="fcProviderID" /> 
+                            <field name="fcIPv4" /> 
                             <field name="fcServerFQDN" /> 
                             <field name="ftNotes"/> 
                             <field name="fm2oProvider"/> 

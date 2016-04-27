@@ -4,6 +4,8 @@ from openerp import models, fields, api
 from openerp.exceptions import ValidationError 
 from requests import requests
 from string import Template
+import json
+import time
 
 class Provider(models.Model):
     _name='cloudmanager.provider'
@@ -38,6 +40,8 @@ class MachineType(models.Model):
             help="Freeform details regarding this machine type, droplet size or server specification")
     fm2oProvider=fields.Many2one('cloudmanager.provider',required=False,string="fm2oProvider",
             help="The provider this machine type is valid for")
+    fcSlug=fields.Text( string="fcSlug",required=False,
+            help="Provider abbreviated name used in templates")
 
 class Image(models.Model):
     _name='cloudmanager.image'
@@ -48,6 +52,8 @@ class Image(models.Model):
             help="Freeform details regarding this OS image")
     fm2oProvider=fields.Many2one('cloudmanager.provider',required=False,string="fm2oProvider",
             help="The provider this image is valid for")
+    fcSlug=fields.Text( string="fcSlug",required=False,
+            help="Provider abbreviated name used in templates")
 
 class Zone(models.Model):
     _name='cloudmanager.zone'
@@ -58,6 +64,8 @@ class Zone(models.Model):
             help="Freeform details regarding this provider zone or region")
     fm2oProvider=fields.Many2one('cloudmanager.provider',required=False,string="fm2oProvider",
             help="The provider this region is valid for")
+    fcSlug=fields.Text( string="fcSlug",required=False,
+            help="Provider abbreviated name used in templates")
 
 class ServerStatus(models.Model):
     _name='cloudmanager.serverstatus'
@@ -94,8 +102,10 @@ class Server(models.Model):
             help="The status of the server",default=1)
     fcProviderID=fields.Char( string="fcProviderID",required=False,readonly=True,
         help="Cloud provider ID assigned on VM creation")
-    fcServerIPv4=fields.Char( string="fcServerIPv4",required=False,readonly=True,
+    fcIPv4=fields.Char( string="fcIPv4",required=False,readonly=True,
         help="Cloud provider assigned public IPv4 number")
+    fcSSHPublicKey=fields.Char( string="fcSSHPublicKey",required=False,readonly=True,
+        help="Optional public ssh key for use in create template")
     # se tiene que llamar state
     state = fields.Selection([
         ('draft', 'Draft'), ('ready','Ready'), ('deployed','Deployed')],
@@ -143,8 +153,8 @@ class Server(models.Model):
             raise ValidationError('Can not change to ready VMs that are not in the workflow draft state')
         if not self.fm2oProvider.fcAPIPasswd:
             raise ValidationError('VM provider must have bearer token fcAPIPasswd defined')
-        if not self.fm2oProvider.fcCreateTemplate:
-            raise ValidationError('VM provider must have fcCreateTemplate defined')
+        if not self.fm2oProvider.ftCreateTemplate:
+            raise ValidationError('VM provider must have ftCreateTemplate defined')
         if not self.fm2oProvider.fcAPIURL:
             raise ValidationError('VM provider must have an API URL defined')
         if not self.name:
@@ -177,21 +187,23 @@ class Server(models.Model):
         #Start Validate
         if self.state != 'ready':
             raise ValidationError('Can not deploy VMs that are not in workflow ready state')
+        if not self.fm2oProvider.id==2:
+            raise ValidationError('VM provider '+self.fm2oProvider.name+' is not supported for deploy at this time')
         if not self.fm2oProvider.fcAPIPasswd:
             raise ValidationError('VM provider must have bearer token fcAPIPasswd defined')
-        if not self.fm2oProvider.fcCreateTemplate:
-            raise ValidationError('VM provider must have fcCreateTemplate defined')
+        if not self.fm2oProvider.ftCreateTemplate:
+            raise ValidationError('VM provider must have ftCreateTemplate defined')
         if not self.fm2oProvider.fcAPIURL:
             raise ValidationError('VM provider must have an API URL defined')
         if not self.ftNotes:
             raise ValidationError('VM must have notes')
-        if not self.fm2oImage:
+        if not self.fm2oImage.fcSlug:
             raise ValidationError('VM must have an OS image ')
-        if not self.fm2oZone:
+        if not self.fm2oZone.fcSlug:
             raise ValidationError('VM must have a provider zone')
         if not self.fm2oProvider:
             raise ValidationError('VM must have a provider')
-        if not self.fm2oMachineType:
+        if not self.fm2oMachineType.fcSlug:
             raise ValidationError('VM must have a machine type')
         if self.fm2oServerStatus.id != 1:
             raise ValidationError('VM must be at Initial Setup VM status')
@@ -202,22 +214,46 @@ class Server(models.Model):
         #Start request VM creation
         Authorization = "Bearer " + str(self.fm2oProvider.fcAPIPasswd)
         h = {"Content-Type": "application/json","Authorization": Authorization}
-        t = Template(self.fm2oProvider.fcCreateTemplate)
+        t = Template(self.fm2oProvider.ftCreateTemplate)
         #this depends on provider and template, since we use safe sub we can use provider prefixed mapping
         #for API dependent name value pairs
-        d = t.safe_substitute(name=self.fcServerFQDN,size=self.fcRamSize,image=self.fm2oImage.name,zone=self.fm2oZone.name);
+        d = t.safe_substitute(name=self.fcServerFQDN,size=self.fm2oMachineType.fcSlug,
+                                image=self.fm2oImage.fcSlug,zone=self.fm2oZone.fcSlug)
+        #raise ValidationError(d)
         r = requests.post(self.fm2oProvider.fcAPIURL,headers=h,data=d)
-        raise ValidationError(r.text)
+        if r.status_code != 202 and r.status_code != 200:
+            raise ValidationError("Error: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if self.fm2oProvider.id==2:
+            if "id" in theJSON["droplet"]:
+                vmid = theJSON["droplet"]["id"]
+            if not vmid:
+                raise ValidationError("Error no VM ID: "+theJSON["droplet"])
+        else:
+            raise ValidationError("Error unsupported provider: "+self.fm2oProvider.name)
         #get provider ID
         #if valid ID we can place server in waiting for deploy server status
-        self.write({'state':'deployed','fm2oServerStatus':'4'})
+        self.write({'state':'deployed','fm2oServerStatus':'4','fcProviderID':vmid})
         #end Start request VM creation
         ##
 
-
         #we must check later (depends on provider?) to change server status to active
         #schedule check creation and get IP number etc
-        self.write({'state':'deployed','fm2oServerStatus':'4'})
+        time.sleep(30)
+        vmidURL=self.fm2oProvider.fcAPIURL+str('/')+str(vmid)
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting IP: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if self.fm2oProvider.id==2:
+            for i in theJSON["droplet"]["networks"]["v4"]:
+                cIPv4 = i["ip_address"]
+            if not cIPv4:
+                raise ValidationError("Error no IPv4: "+theJSON["droplets"]["networks"])
+        else:
+            raise ValidationError("Error unsupported provider: "+self.fm2oProvider.name)
+
+        self.write({'fm2oServerStatus':'2','fcIPv4':cIPv4})
 
         ##
         #start DNS API
