@@ -83,7 +83,7 @@
             <field name ="fcServerFQDN">dev0.acme.net</field>
             <field name ="ftNotes">Development server</field>
             <field name="fm2oProvider" ref="DigitalOcean Droplet"/>
-            <field name="fm2oServerStatus" ref="Initial Setup"/>
+            <field name="fm2oServerStatus" ref="Active"/>
             <field name ="fcRamSize">512MB</field>
             <field name ="fcDiskSize">10GB-SSD</field>
             <field name ="fm2oMachineType" ref="Size $5"/>

@@ -29,10 +29,16 @@
                     <header>
                         <button name="to_ready" states="draft" string="To Ready" type="object" 
                             help="Change state to ready to deploy"/>
-                        <button name="to_draft" states="ready,deployed" string="To Draft" type="object"
+                        <button name="to_draft" states="ready" string="To Draft" type="object"
                             help="Return to draft state for further configuration. Can not be already deployed"/>
                         <button name="deployvm" states="ready" string="Deploy VM" type="object"
                             help="Connect to provider and start VM as configured"/>
+                        <button name="startvm" states="deployedStopped" string="Start VM" type="object"
+                            help="Connect to provider and start a stopped deployed VM"/>
+                        <button name="destroyvm" states="deployedActive,deployedStopped" string="Destroy VM" type="object"
+                            help="!DANGER! Connect to provider and destroy a deployed VM" class="oe_highlight"/>
+                        <button name="stopvm" states="deployedActive" string="Stop VM" type="object"
+                            help="!DANGER! Connect to provider and stop an active  deployed VM" class="oe_highlight"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>

@@ -108,7 +108,7 @@ class Server(models.Model):
         help="Optional public ssh key for use in create template")
     # se tiene que llamar state
     state = fields.Selection([
-        ('draft', 'Draft'), ('ready','Ready'), ('deployed','Deployed')],
+        ('draft', 'Draft'), ('ready','Ready'), ('deployedActive','Deployed Active'),('deployedStopped','Deployed Stopped')],
         string='State', required=True, default='draft',)
 
     _sql_constraints = [
@@ -211,7 +211,7 @@ class Server(models.Model):
         ##
 
         ##
-        #Start request VM creation
+        #request VM creation
         Authorization = "Bearer " + str(self.fm2oProvider.fcAPIPasswd)
         h = {"Content-Type": "application/json","Authorization": Authorization}
         t = Template(self.fm2oProvider.ftCreateTemplate)
@@ -233,26 +233,25 @@ class Server(models.Model):
             raise ValidationError("Error unsupported provider: "+self.fm2oProvider.name)
         #get provider ID
         #if valid ID we can place server in waiting for deploy server status
-        self.write({'state':'deployed','fm2oServerStatus':'4','fcProviderID':vmid})
-        #end Start request VM creation
+        self.write({'state':'deployedActive','fm2oServerStatus':'4','fcProviderID':vmid})
+        #end request VM creation
         ##
 
         #we must check later (depends on provider?) to change server status to active
         #schedule check creation and get IP number etc
+        #DO only at this time
         time.sleep(30)
         vmidURL=self.fm2oProvider.fcAPIURL+str('/')+str(vmid)
         r = requests.get(vmidURL,headers=h)
         if r.status_code != 200:
-            raise ValidationError("Error getting IP: "+str(r.status_code)+r.text)
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
         theJSON=json.loads(r.text)
-        if self.fm2oProvider.id==2:
+        if "networks" in theJSON["droplet"] and "v4" in theJSON["droplet"]["networks"]:
             for i in theJSON["droplet"]["networks"]["v4"]:
                 cIPv4 = i["ip_address"]
-            if not cIPv4:
-                raise ValidationError("Error no IPv4: "+theJSON["droplets"]["networks"])
-        else:
-            raise ValidationError("Error unsupported provider: "+self.fm2oProvider.name)
-
+                break
+        if not cIPv4:
+            raise ValidationError("Error no IPv4: "+theJSON["droplet"]["networks"])
         self.write({'fm2oServerStatus':'2','fcIPv4':cIPv4})
 
         ##
@@ -260,4 +259,166 @@ class Server(models.Model):
         #post DNS A zone creation request
         #end DNS API
         ##
+        return True
+
+    ##
+    # destroyvm
+    #   uses cloud provider API to destroy a VM
+    @api.multi
+    def destroyvm(self):
+        ##
+        #Start Validate
+        if self.state != 'deployedActive' and self.state != 'deployedStopped':
+            raise ValidationError('Can not destroy VMs that are not in  a workflow deployed state')
+        if not self.fm2oProvider.id==2:
+            raise ValidationError('VM provider '+self.fm2oProvider.name+' is not supported for destroy at this time')
+        if not self.fm2oProvider.fcAPIPasswd:
+            raise ValidationError('VM provider must have bearer token fcAPIPasswd defined')
+        if not self.fcProviderID:
+            raise ValidationError('Server must have a valid fcProviderID')
+        if not self.fm2oProvider.fcAPIURL:
+            raise ValidationError('VM provider must have an API URL defined')
+        if self.fm2oServerStatus.id == 1:
+            raise ValidationError('VM must not be at Initial Setup VM status')
+        #end Validate
+        ##
+
+        ##
+        #request VM destroy
+        #DO only at this time
+        Authorization = "Bearer " + str(self.fm2oProvider.fcAPIPasswd)
+        h = {"Content-Type": "application/json","Authorization": Authorization}
+        vmidURL=self.fm2oProvider.fcAPIURL+str('/')+self.fcProviderID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "active" and theJSON["droplet"]["status"] != "off":
+                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        r = requests.delete(vmidURL,headers=h)
+        if r.status_code != 204:
+            raise ValidationError("Error destroyvm: "+str(r.status_code)+r.text)
+        #initial setup server status. ready state. remove IP and ID.
+        self.write({'fm2oServerStatus':'1','fcProviderID':'','fcIPv4':'','state':'ready'})
+
+        return True
+
+    ##
+    # stopvm
+    #   uses cloud provider API to destroy a VM
+    @api.multi
+    def stopvm(self):
+        ##
+        #Start Validate
+        if self.state != 'deployedActive':
+            raise ValidationError('Can not stop VMs that are not in a workflow active deployed state')
+        if not self.fm2oProvider.id==2:
+            raise ValidationError('VM provider '+self.fm2oProvider.name+' is not supported for stop at this time')
+        if not self.fm2oProvider.fcAPIPasswd:
+            raise ValidationError('VM provider must have bearer token fcAPIPasswd defined')
+        if not self.fcProviderID:
+            raise ValidationError('Server must have a valid fcProviderID')
+        if not self.fm2oProvider.ftStopTemplate:
+            raise ValidationError('VM provider must have valid ftStopTemplate')
+        if not self.fm2oProvider.fcAPIURL:
+            raise ValidationError('VM provider must have an API URL defined')
+        if self.fm2oServerStatus.id == 1:
+            raise ValidationError('VM must not be at Initial Setup VM status')
+        #end Validate
+        ##
+
+        ##
+        #request VM stop
+        #DO only at this time
+        Authorization = "Bearer " + str(self.fm2oProvider.fcAPIPasswd)
+        h = {"Content-Type": "application/json","Authorization": Authorization}
+        vmidURL=self.fm2oProvider.fcAPIURL+str('/')+self.fcProviderID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "active":
+                if theJSON["droplet"]["status"] == "off":
+                    self.write({'fm2oServerStatus':'3','state':'deployedStopped'})
+                    return True
+                else:
+                    raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        vmidURL=self.fm2oProvider.fcAPIURL+str('/')+self.fcProviderID+str('/actions')
+        r = requests.post(vmidURL,headers=h,data=self.fm2oProvider.ftStopTemplate)
+        if r.status_code != 201:
+            raise ValidationError("Error stopvm: "+str(r.status_code)+r.text)
+        #waiting for stop server status. deplyed stopped state.
+        self.write({'fm2oServerStatus':'6','state':'deployedStopped'})
+        #wait and check for status change, this is only for development testing
+        time.sleep(30)
+        vmidURL=self.fm2oProvider.fcAPIURL+str('/')+self.fcProviderID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "off":
+                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        #stopped
+        self.write({'fm2oServerStatus':'3'})
+        return True
+
+    ##
+    # startvm
+    #   uses cloud provider API to destroy a VM
+    @api.multi
+    def startvm(self):
+        ##
+        #Start Validate
+        if self.state != 'deployedStopped':
+            raise ValidationError('Can not start VMs that are not in a workflow stopped deployed state')
+        if not self.fm2oProvider.id==2:
+            raise ValidationError('VM provider '+self.fm2oProvider.name+' is not supported for stop at this time')
+        if not self.fm2oProvider.fcAPIPasswd:
+            raise ValidationError('VM provider must have bearer token fcAPIPasswd defined')
+        if not self.fcProviderID:
+            raise ValidationError('Server must have a valid fcProviderID')
+        if not self.fm2oProvider.ftStartTemplate:
+            raise ValidationError('VM provider must have valid ftStartTemplate')
+        if not self.fm2oProvider.fcAPIURL:
+            raise ValidationError('VM provider must have an API URL defined')
+        if self.fm2oServerStatus.id == 1:
+            raise ValidationError('VM must not be at Initial Setup VM status')
+        #end Validate
+        ##
+
+        ##
+        #request VM start
+        #DO only at this time
+        Authorization = "Bearer " + str(self.fm2oProvider.fcAPIPasswd)
+        h = {"Content-Type": "application/json","Authorization": Authorization}
+        vmidURL=self.fm2oProvider.fcAPIURL+str('/')+self.fcProviderID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "off":
+                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        vmidURL=self.fm2oProvider.fcAPIURL+str('/')+self.fcProviderID+str('/actions')
+        r = requests.post(vmidURL,headers=h,data=self.fm2oProvider.ftStartTemplate)
+        if r.status_code != 201:
+            raise ValidationError("Error startvm: "+str(r.status_code)+r.text)
+        #waiting for start server/reboot status. deployed active state.
+        self.write({'fm2oServerStatus':'8','state':'deployedActive'})
+        #wait and check for status change, this is only for development testing
+        time.sleep(30)
+        vmidURL=self.fm2oProvider.fcAPIURL+str('/')+self.fcProviderID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "active":
+                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        #active
+        self.write({'fm2oServerStatus':'2'})
+
         return True
