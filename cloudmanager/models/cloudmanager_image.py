@@ -3,7 +3,7 @@ from openerp import models, fields
 # from openerp.exceptions import ValidationError
 
 
-class Image(models.Model):
+class CloudmanagerImage(models.Model):
     _name = 'cloudmanager.image'
     _description = 'Cloud service provider OS image name'
 
