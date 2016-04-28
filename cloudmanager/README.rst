@@ -2,9 +2,8 @@
    :target: http://www.gnu.org/licenses/agpl-3.0-standalone.html
    :alt: License: AGPL-3
 
-==============
-{module_title}
-==============
+Cloud Manager
+=============
 
 Create and manage Google Compute Engine VM and Digital Ocean Droplet (and similar vendor) instances for any purpose including running a SaaS company.
 Provide for "High Availability (HA)" and "Disaster recovery (DR)" via remote datacenter warm backup systems.
