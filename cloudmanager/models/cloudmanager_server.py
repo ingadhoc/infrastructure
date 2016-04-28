@@ -7,7 +7,7 @@ import json
 import time
 
 
-class Server(models.Model):
+class CloudmanagerServer(models.Model):
     _name = 'cloudmanager.server'
     _description = 'The server instance'
 

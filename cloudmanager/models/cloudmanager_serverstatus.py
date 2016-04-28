@@ -4,7 +4,7 @@ from openerp import models, fields
 # from openerp.exceptions import ValidationError
 
 
-class ServerStatus(models.Model):
+class CloudmanagerServerStatus(models.Model):
     _name = 'cloudmanager.serverstatus'
     _description = 'Cloud Manager server status'
 
