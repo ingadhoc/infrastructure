@@ -2,78 +2,11 @@
 
 from openerp import models, fields, api
 from openerp.exceptions import ValidationError 
-from requests import requests
+# from requests import requests
 from string import Template
 import json
 import time
 
-class Provider(models.Model):
-    _name='cloudmanager.provider'
-    _description='Cloud service provider with all API required data'
-    name=fields.Char( required=True,
-            help="Name of the cloud provider organization")
-    ftCreateTemplate=fields.Text( string="ftCreateTemplate", required=False,
-            help="REST Create template")
-    ftDeleteTemplate=fields.Text( string="ftDeleteTemplate",required=False,
-            help="REST Delete template")
-    ftStopTemplate=fields.Text( string="ftStopTemplate", required=False,
-            help="REST Stop template")
-    ftStartTemplate=fields.Text( string="ftStartTemplate", required=False,
-            help="REST Start template")
-    fcMainURL=fields.Char( string="fcMainURL", required=False,
-            help="Provider administrative web app URL")
-    fcAPIURL=fields.Char( string="fcAPIURL", required=False,
-            help="Provider API URL")
-    fcAPIUser=fields.Char( string="fcAPIUser", required=False,
-            help="API login or username")
-    fcAPIPasswd=fields.Char( string="fcAPIPasswd", required=False,
-            help="API password")
-    ftNotes=fields.Text( string="ftNotes", required=False,
-            help="Freeform details regarding this cloud provider")
-
-class MachineType(models.Model):
-    _name='cloudmanager.machinetype'
-    _description='Cloud service provider server specification shorthand name'
-    name=fields.Char(required=True,
-            help="Provider name of the machine type or droplet size (server specification)")
-    ftNotes=fields.Text( string="ftNotes",required=False,
-            help="Freeform details regarding this machine type, droplet size or server specification")
-    fm2oProvider=fields.Many2one('cloudmanager.provider',required=False,string="fm2oProvider",
-            help="The provider this machine type is valid for")
-    fcSlug=fields.Text( string="fcSlug",required=False,
-            help="Provider abbreviated name used in templates")
-
-class Image(models.Model):
-    _name='cloudmanager.image'
-    _description='Cloud service provider OS image name'
-    name=fields.Char(required=True,
-            help="Provider name of the OS image")
-    ftNotes=fields.Text( string="ftNotes",required=False,
-            help="Freeform details regarding this OS image")
-    fm2oProvider=fields.Many2one('cloudmanager.provider',required=False,string="fm2oProvider",
-            help="The provider this image is valid for")
-    fcSlug=fields.Text( string="fcSlug",required=False,
-            help="Provider abbreviated name used in templates")
-
-class Zone(models.Model):
-    _name='cloudmanager.zone'
-    _description='Cloud service provider name of service region or zone'
-    name=fields.Char(required=True,
-            help="Provider name of the geographical region or zone that will host the server")
-    ftNotes=fields.Text( string="ftNotes",required=False,
-            help="Freeform details regarding this provider zone or region")
-    fm2oProvider=fields.Many2one('cloudmanager.provider',required=False,string="fm2oProvider",
-            help="The provider this region is valid for")
-    fcSlug=fields.Text( string="fcSlug",required=False,
-            help="Provider abbreviated name used in templates")
-
-class ServerStatus(models.Model):
-    _name='cloudmanager.serverstatus'
-    _description='Cloud Manager server status'
-    name=fields.Char(required=True,readonly=True,
-            help="Server status name")
-    ftNotes=fields.Text( string="ftNotes",required=False,
-            help="Freeform details regarding this server status")
 
 class Server(models.Model):
     _name='cloudmanager.server'
