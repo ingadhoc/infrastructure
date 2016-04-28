@@ -2,99 +2,99 @@
     <data>
         <record model="cloudmanager.zone" id="asia-east1-a">
             <field name="name">asia-east1-a</field>
-            <field name="fcSlug">asia-east1-a</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">asia-east1-a</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="asia-east1-b">
             <field name="name">asia-east1-b</field>
-            <field name="fcSlug">asia-east1-b</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">asia-east1-b</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="asia-east1-c">
             <field name="name">asia-east1-c</field>
-            <field name="fcSlug">asia-east1-c</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">asia-east1-c</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="europe-west1-b">
             <field name="name">europe-west1-b</field>
-            <field name="fcSlug">europe-west1-b</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">europe-west1-b</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="europe-west1-c">
             <field name="name">europe-west1-c</field>
-            <field name="fcSlug">europe-west1-c</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">europe-west1-c</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="europe-west1-d">
             <field name="name">europe-west1-d</field>
-            <field name="fcSlug">europe-west1-d</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">europe-west1-d</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="us-central1-a">
             <field name="name">us-central1-a</field>
-            <field name="fcSlug">us-central1-a</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">us-central1-a</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="us-central1-b">
             <field name="name">us-central1-b</field>
-            <field name="fcSlug">us-central1-b</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">us-central1-b</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="us-central1-c">
             <field name="name">us-central1-c</field>
-            <field name="fcSlug">us-central1-c</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">us-central1-c</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="us-central1-d">
             <field name="name">us-central1-d</field>
-            <field name="fcSlug">us-central1-d</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">us-central1-d</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="us-east1-b">
             <field name="name">us-east1-b</field>
-            <field name="fcSlug">us-east1-b</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">us-east1-b</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="us-east1-c">
             <field name="name">us-east1-c</field>
-            <field name="fcSlug">us-east1-c</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">us-east1-c</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.zone" id="us-east1-d">
             <field name="name">us-east1-d</field>
-            <field name="fcSlug">us-east1-d</field>
-            <field name="fm2oProvider" ref="Google Compute Engine VM"/>
+            <field name="slug">us-east1-d</field>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
 
         <record model="cloudmanager.zone" id="New York 1">
             <field name="name">New York 1</field>
-            <field name="fcSlug">nyc1</field>
-            <field name="fm2oProvider" ref="DigitalOcean Droplet"/>
+            <field name="slug">nyc1</field>
+            <field name="provider_id" ref="digitalOcean_droplet"/>
         </record>
         <record model="cloudmanager.zone" id="New York 2">
             <field name="name">New York 2</field>
-            <field name="fcSlug">nyc2</field>
-            <field name="fm2oProvider" ref="DigitalOcean Droplet"/>
+            <field name="slug">nyc2</field>
+            <field name="provider_id" ref="digitalOcean_droplet"/>
         </record>
         <record model="cloudmanager.zone" id="New York 3">
             <field name="name">New York 3</field>
-            <field name="fcSlug">nyc3</field>
-            <field name="fm2oProvider" ref="DigitalOcean Droplet"/>
+            <field name="slug">nyc3</field>
+            <field name="provider_id" ref="digitalOcean_droplet"/>
         </record>
         <record model="cloudmanager.zone" id="San Francisco 1">
             <field name="name">San Francisco 1</field>
-            <field name="fcSlug">sfo1</field>
-            <field name="fm2oProvider" ref="DigitalOcean Droplet"/>
+            <field name="slug">sfo1</field>
+            <field name="provider_id" ref="digitalOcean_droplet"/>
         </record>
         <record model="cloudmanager.zone" id="Amsterdam 2">
             <field name="name">Amsterdam 2</field>
-            <field name="fcSlug">ams2</field>
-            <field name="fm2oProvider" ref="DigitalOcean Droplet"/>
+            <field name="slug">ams2</field>
+            <field name="provider_id" ref="digitalOcean_droplet"/>
         </record>
         <record model="cloudmanager.zone" id="Amsterdam 3">
             <field name="name">Amsterdam 2</field>
-            <field name="fcSlug">ams3</field>
-            <field name="fm2oProvider" ref="DigitalOcean Droplet"/>
+            <field name="slug">ams3</field>
+            <field name="provider_id" ref="digitalOcean_droplet"/>
         </record>
     </data>
 </openerp>

@@ -1,0 +1,65 @@
+<openerp>
+    <data>
+        <record model="cloudmanager.serverstatus" id="initial_setup">
+            <field name="name">Initial Setup</field>
+            <field name ="notes">The Initial Setup state is for servers that have not been deployed.
+Or that having been deployed in the past have been deleted.
+	    </field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="active">
+            <field name="name">Active</field>
+            <field name ="notes">The Active state is when the VM has been deployed by the cloud provider
+ and is fully functional.
+	    </field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="stopped">
+            <field name="name">Stopped</field>
+            <field name ="notes">The Stopped state is when the VM has been stopped by the cloud provider.
+	    </field>
+        </record>
+
+        <record model="cloudmanager.serverstatus" id="waiting_for_deployment">
+            <field name="name">Waiting for Deployment</field>
+            <field name ="notes">The Waiting for Deployment state is a transitional state and should
+only appear while the cloud provider is setting up the VM.
+	    </field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="waiting_for_script_action">
+            <field name="name">Waiting for Script Action</field>
+            <field name ="notes">The Waiting for Script Action state is a transitional state, and should
+appear only after a wizard or button event has taken place that causes a template script to run on a given server.
+	    </field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="waiting_for_stop">
+            <field name="name">Waiting for Stop</field>
+            <field name ="notes">The Waiting for Stop is a transitional state, and should only appear
+while the cloud provider is stopping the VM.
+	    </field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="waiting_for_delete">
+            <field name="name">Waiting for Delete</field>
+            <field name ="notes">The Waiting for Delete is a transitional state, and should only appear
+while the cloud provider is deleting the VM.
+	    </field>
+        </record>
+        <record model="cloudmanager.serverstatus" id="waiting_for_reboot">
+            <field name="name">Waiting for Reboot</field>
+            <field name ="notes">The Waiting for Reboot is a transitional state, and should only appear
+while the cloud provider is rebooting the VM.
+	    </field>
+        </record>
+	<record model="ir.ui.view" id="serverstatus_tree_view">
+	    <field name="name">serverstatus.tree.view</field>
+	    <field name="model">cloudmanager.serverstatus</field>
+	    <field name="type">tree</field>
+	    <field name="arch" type="xml">
+			<tree string="Server Status">
+				<field name="name"/> 
+				<field name="notes" /> 
+				<field name="id" /> 
+			</tree>
+	    </field>
+	</record>
+
+    </data>
+</openerp>

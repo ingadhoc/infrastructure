@@ -1,40 +1,41 @@
+
 <openerp>
     <data>
         <record model="cloudmanager.image" id="debian-7-wheezy-v20160329">
             <field name="name">debian-7-wheezy-v20160329</field>
             <field name="slug">debian-7-wheezy-v20160329</field>
-            <field name="provider_id" ref="Google Compute Engine VM"/>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.image" id="debian-8-jessie-v20160329">
             <field name="name">debian-8-jessie-v20160329</field>
             <field name="slug">debian-8-jessie-v20160329</field>
-            <field name="provider_id" ref="Google Compute Engine VM"/>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.image" id="ubuntu-1204-precise-v20160320">
             <field name="name">ubuntu-1204-precise-v20160320</field>
             <field name="slug">ubuntu-1204-precise-v20160320</field>
-            <field name="provider_id" ref="Google Compute Engine VM"/>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.image" id="ubuntu-1404-trusty-v20160406">
             <field name="name">ubuntu-1404-trusty-v20160406</field>
             <field name="slug">ubuntu-1404-trusty-v20160406</field>
-            <field name="provider_id" ref="Google Compute Engine VM"/>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
         <record model="cloudmanager.image" id="ubuntu-1510-wily-v20160405">
             <field name="name">ubuntu-1510-wily-v20160405</field>
             <field name="slug">ubuntu-1510-wily-v20160405</field>
-            <field name="provider_id" ref="Google Compute Engine VM"/>
+            <field name="provider_id" ref="google_compute_engine_VM"/>
         </record>
 
         <record model="cloudmanager.image" id="ubuntu-15-10-x64">
             <field name="name">Ubuntu 15.10 x64</field>
             <field name="slug">ubuntu-15-10-x64</field>
-            <field name="provider_id" ref="DigitalOcean Droplet"/>
+            <field name="provider_id" ref="digitalOcean_droplet"/>
         </record>
         <record model="cloudmanager.image" id="ubuntu-12-04-x64">
             <field name="name">Ubuntu 12.04 x64</field>
             <field name="slug">ubuntu-12-04-x64</field>
-            <field name="provider_id" ref="DigitalOcean Droplet"/>
+            <field name="provider_id" ref="digitalOcean_droplet"/>
         </record>
     </data>
 </openerp>
