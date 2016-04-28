@@ -20,13 +20,13 @@ class DeployVM(models.TransientModel):
             # are required fields
             if not server.name:
                 return False
-            if not server.ftNotes:
+            if not server.notes:
                 return False
-            if not server.fm2oProvider:
+            if not server.provider_id:
                 return False
-            if not server.fm2oMachineType:
+            if not server.machine_type_id:
                 return False
-            if not server.fm2oServerStatus:
+            if not server.server_status_id:
                 return False
             server.state = 'ready'
             _logger.info('server_id %s', server.id)

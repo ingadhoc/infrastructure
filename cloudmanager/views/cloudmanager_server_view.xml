@@ -8,14 +8,14 @@
             <field name="arch" type="xml">
                 <tree string="Server">
                     <field name="name"/> 
-                    <field name="ftNotes" /> 
-                    <field name="fcServerFQDN" /> 
-                    <field name="fm2oProvider" /> 
-                    <field name="fm2oServerStatus" /> 
-                    <field name="fm2oMachineType" /> 
-                    <field name="fm2oImage" /> 
-                    <field name="fm2oZone" /> 
-                    <field name="fcTimeZone" /> 
+                    <field name="notes" /> 
+                    <field name="server_FQDN" /> 
+                    <field name="provider_id" /> 
+                    <field name="server_status_id" /> 
+                    <field name="machine_type_id" /> 
+                    <field name="image_id" /> 
+                    <field name="zone_id" /> 
+                    <field name="time_zone" /> 
                     <field name="state"/> 
                 </tree>
             </field>
@@ -44,18 +44,18 @@
                     <sheet>
                         <group>
                             <field name="name"/> 
-                            <field name="fcProviderID" /> 
-                            <field name="fcIPv4" /> 
-                            <field name="fcServerFQDN" /> 
-                            <field name="ftNotes"/> 
-                            <field name="fm2oProvider"/> 
-                            <field name="fm2oServerStatus"/> 
-                            <field name="fm2oMachineType" domain="[('fm2oProvider', '=', fm2oProvider)]"/> 
-                            <field name="fm2oImage" domain="[('fm2oProvider', '=', fm2oProvider)]"/> 
-                            <field name="fm2oZone" domain="[('fm2oProvider', '=', fm2oProvider)]"/> 
-                            <field name="fcTimeZone" /> 
-                            <field name="fcDiskSize" /> 
-                            <field name="fcRamSize" /> 
+                            <field name="providerID" /> 
+                            <field name="IPv4" /> 
+                            <field name="server_FQDN" /> 
+                            <field name="notes"/> 
+                            <field name="provider_id"/> 
+                            <field name="server_status_id"/> 
+                            <field name="machine_type_id" domain="[('provider_id', '=', provider_id)]"/> 
+                            <field name="image_id" domain="[('provider_id', '=', provider_id)]"/> 
+                            <field name="zone_id" domain="[('provider_id', '=', provider_id)]"/> 
+                            <field name="time_zone" /> 
+                            <field name="disk_size" /> 
+                            <field name="ram_size" /> 
                         </group>
                     </sheet>
                 </form>
