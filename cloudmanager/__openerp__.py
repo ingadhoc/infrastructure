@@ -16,12 +16,10 @@ machines.""",
         'base',
         'board'
     ],
-    # 'external_dependencies': {
-    #     'python': ['requests']
-    # },
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
+        'security/security.xml',
+        'security/ir.model.access.csv',
         'wizards/cloudmanager_deployvm_view.xml',
         'views/cloudmanager.xml',
         'views/cloudmanager_provider_view.xml',
@@ -35,11 +33,10 @@ machines.""",
         'data/cloudmanager_machinetype_data.xml',
         'data/cloudmanager_image_data.xml',
         'data/cloudmanager_zone_cloudmanager.xml',
-        'data/cloudmanager_server_data.xml',
     ],
     # only loaded in demonstration mode
     'demo': [
-        'demo.xml',
+        'demo/cloudmanager_server_demo.xml',
     ],
     'test': [
     ],
