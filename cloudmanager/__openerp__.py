@@ -36,7 +36,7 @@ machines.""",
     ],
     # only loaded in demonstration mode
     'demo': [
-        'demo/cloudmanager_server_demo.xml',
+        # 'demo/cloudmanager_server_demo.xml',
     ],
     'test': [
     ],

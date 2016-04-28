@@ -9,7 +9,7 @@
                 <tree string="Server">
                     <field name="name"/> 
                     <field name="notes" /> 
-                    <field name="server_FQDN" /> 
+                    <field name="server_fqdn" /> 
                     <field name="provider_id" /> 
                     <field name="server_status_id" /> 
                     <field name="machine_type_id" /> 
@@ -45,8 +45,8 @@
                         <group>
                             <field name="name"/> 
                             <field name="providerID" /> 
-                            <field name="IPv4" /> 
-                            <field name="server_FQDN" /> 
+                            <field name="ipv4" /> 
+                            <field name="server_fqdn" /> 
                             <field name="notes"/> 
                             <field name="provider_id"/> 
                             <field name="server_status_id"/> 

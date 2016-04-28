@@ -17,7 +17,7 @@ class CloudmanagerServer(models.Model):
         states={'draft': [('readonly', False)]},
         help="Provider name of the instance/droplet or VM server",
     )
-    server_FQDN = fields.Char(
+    server_fqdn = fields.Char(
         string="Server FQDN",
         required=True,
         help="FQDN DNS name of the instance/droplet or VM server",
@@ -71,7 +71,7 @@ class CloudmanagerServer(models.Model):
     server_status_id = fields.Many2one(
         'cloudmanager.serverstatus',
         required=True,
-        string="server_status_id",
+        string="Server Status",
         help="The status of the server",
         # TODO remove this, if we want a default we should use a function
         # that try to search one, because 1 coudl not exist
@@ -82,11 +82,12 @@ class CloudmanagerServer(models.Model):
         readonly=True,
         help="Cloud provider ID assigned on VM creation",
     )
-    IPv4 = fields.Char(
+    ipv4 = fields.Char(
+        string="IPv4",
         readonly=True,
-        help="Cloud provider assigned public IPv4 number",
+        help="Cloud provider assigned public ipv4 number",
     )
-    SSH_public_key = fields.Char(
+    ssh_public_key = fields.Char(
         readonly=True,
         help="Optional public ssh key for use in create template",
     )
@@ -102,7 +103,7 @@ class CloudmanagerServer(models.Model):
     )
 
     _sql_constraints = [
-        ('server_FQDN_unique', 'UNIQUE(server_FQDN)',
+        ('server_fqdn_unique', 'UNIQUE(server_fqdn)',
             'Server FQDN must be unique'),
         ('name', 'UNIQUE(name)', 'name must be unique'),
     ]
@@ -282,15 +283,15 @@ class CloudmanagerServer(models.Model):
                 "networks" in theJSON["droplet"] and
                 "v4" in theJSON["droplet"]["networks"]):
             for i in theJSON["droplet"]["networks"]["v4"]:
-                cIPv4 = i["ip_address"]
+                cipv4 = i["ip_address"]
                 break
-        if not cIPv4:
+        if not cipv4:
             raise ValidationError(_(
-                "Error no IPv4: %s") % theJSON["droplet"]["networks"])
+                "Error no ipv4: %s") % theJSON["droplet"]["networks"])
         self.write({
             # TODO we should get this status by other way, not id
             # 'server_status_id': '2',
-            'fcIPv4': cIPv4})
+            'fcipv4': cipv4})
 
         ##
         # start DNS API

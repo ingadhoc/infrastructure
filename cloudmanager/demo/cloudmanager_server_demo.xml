@@ -2,7 +2,7 @@
     <data>
         <record model="cloudmanager.server" id="mx0">
             <field name="name">mx0</field>
-            <field name="server_FQDN">mx0.acme.net</field>
+            <field name="server_fqdn">mx0.acme.net</field>
             <field name="notes">postfix incoming mx gateway mail server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
             <field name="server_status_id" ref="initial_setup"/>
@@ -15,7 +15,7 @@
         </record>
         <record model="cloudmanager.server" id="mx1">
             <field name="name">mx1</field>
-            <field name="server_FQDN">mx1.acme.net</field>
+            <field name="server_fqdn">mx1.acme.net</field>
             <field name="notes">postfix incoming mx gateway mail server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
             <field name="server_status_id" ref="active"/>
@@ -28,7 +28,7 @@
         </record>
         <record model="cloudmanager.server" id="smtp0">
             <field name="name">smtp0</field>
-            <field name="server_FQDN">smtp0.acme.net</field>
+            <field name="server_fqdn">smtp0.acme.net</field>
             <field name="notes">postfix outgoing smtp relay mail server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
             <field name="server_status_id" ref="active"/>
@@ -41,7 +41,7 @@
         </record>
         <record model="cloudmanager.server" id="smtp1">
             <field name="name">smtp1</field>
-            <field name="server_FQDN">smtp1.acme.net</field>
+            <field name="server_fqdn">smtp1.acme.net</field>
             <field name="notes">postfix outgoing smtp relay mail server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
             <field name="server_status_id" ref="waiting_for_deployment"/>
@@ -54,7 +54,7 @@
         </record>
         <record model="cloudmanager.server" id="store0">
             <field name="name">store0</field>
-            <field name="server_FQDN">store0.acme.net</field>
+            <field name="server_fqdn">store0.acme.net</field>
             <field name="notes">a-j postfix smtp pop mail store server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
             <field name="server_status_id" ref="active"/>
@@ -67,7 +67,7 @@
         </record>
         <record model="cloudmanager.server" id="store1">
             <field name="name">store1</field>
-            <field name="server_FQDN">store1.acme.net</field>
+            <field name="server_fqdn">store1.acme.net</field>
             <field name="notes">k-z postfix smtp pop mail store server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
             <field name="server_status_id" ref="stopped"/>
@@ -80,7 +80,7 @@
         </record>
         <record model="cloudmanager.server" id="dev0">
             <field name="name">dev0</field>
-            <field name="server_FQDN">dev0.acme.net</field>
+            <field name="server_fqdn">dev0.acme.net</field>
             <field name="notes">Development server</field>
             <field name="provider_id" ref="digitalOcean_droplet"/>
             <field name="server_status_id" ref="active"/>
