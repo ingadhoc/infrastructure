@@ -36,7 +36,7 @@ To use this module, you need to:
 Known issues / Roadmap
 ======================
 
-* ...
+#. Issue 1...
 
 Bug Tracker
 ===========
