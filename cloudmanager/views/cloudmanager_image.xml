@@ -7,9 +7,9 @@
             <field name="arch" type="xml">
                 <tree string="Image">
                     <field name="name"/> 
-                    <field name="fcSlug"/> 
-                    <field name="ftNotes" /> 
-                    <field name="fm2oProvider" /> 
+                    <field name="slug"/> 
+                    <field name="notes"/> 
+                    <field name="provider_id"/> 
                 </tree>
             </field>
         </record>
@@ -26,9 +26,9 @@
                     <sheet>
                         <group>
                             <field name="name"/> 
-                            <field name="fcSlug"/> 
-                            <field name="ftNotes" /> 
-                            <field name="fm2oProvider" /> 
+                            <field name="slug"/> 
+                            <field name="notes"/> 
+                            <field name="provider_id"/> 
                         </group>
                     </sheet>
                 </form>
