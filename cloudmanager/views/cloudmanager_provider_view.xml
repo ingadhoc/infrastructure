@@ -19,7 +19,7 @@
 	    <field name="arch" type="xml">
 			<tree string="Cloud Provider">
 				<field name="name"/> 
-				<field name="ftNotes" /> 
+				<field name="notes" /> 
 				<field name="id" /> 
 			</tree>
 	    </field>
