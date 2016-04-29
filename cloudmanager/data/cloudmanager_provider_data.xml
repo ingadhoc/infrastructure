@@ -1,0 +1,18 @@
+<openerp>
+    <data>
+        <record model="cloudmanager.provider" id="google_compute_engine_VM">
+            <field name="name">google_compute_engine_VM</field>
+	    <field name ="notes">Google Cloud Platform Compute Engine is the very long name of this Google VM service.
+The VMs are also referred to as instances.
+Main web app: https://console.cloud.google.com/compute
+	    </field>
+        </record>
+        <record model="cloudmanager.provider" id="digitalOcean_droplet">
+            <field name="name">digitalOcean_droplet</field>
+	    <field name ="notes">DigitalOcean has a much simpler and terse VM nomenclature.
+Droplets are just VMs.
+Main web app: https://cloud.digitalocean.com
+	    </field>
+        </record>
+    </data>
+</openerp>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.actions.act_window" id="provider_list_action">
+            <field name="name">Provider</field>
+            <field name="res_model">cloudmanager.provider</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Create the first provider
+                </p>
+            </field>
+        </record>
+
+	<record model="ir.ui.view" id="provider_tree_view">
+	    <field name="name">provider.tree.view</field>
+	    <field name="model">cloudmanager.provider</field>
+	    <field name="type">tree</field>
+	    <field name="arch" type="xml">
+			<tree string="Cloud Provider">
+				<field name="name"/> 
+				<field name="notes" /> 
+				<field name="id" /> 
+			</tree>
+	    </field>
+	</record>
+
+        <menuitem id="provider_menu" name="Provider" parent="cloudmanager_menu"
+                  action="provider_list_action"/>
+    </data>
+</openerp>
+
+

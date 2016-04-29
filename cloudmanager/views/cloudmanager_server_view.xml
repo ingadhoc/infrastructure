@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="server_tree_view">
+            <field name="name">server.tree.view</field>
+            <field name="model">cloudmanager.server</field>
+            <field name="arch" type="xml">
+                <tree string="Server">
+                    <field name="name"/> 
+                    <field name="notes" /> 
+                    <field name="server_fqdn" /> 
+                    <field name="provider_id" /> 
+                    <field name="server_status_id" /> 
+                    <field name="machine_type_id" /> 
+                    <field name="image_id" /> 
+                    <field name="zone_id" /> 
+                    <field name="time_zone" /> 
+                    <field name="state"/> 
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="server_form_view">
+            <field name="name">server.form.view</field>
+            <field name="model">cloudmanager.server</field>
+            <field name="arch" type="xml">
+                <form string="Server">
+                    <header>
+                        <button name="to_ready" states="draft" string="To Ready" type="object" 
+                            help="Change state to ready to deploy"/>
+                        <button name="to_draft" states="ready" string="To Draft" type="object"
+                            help="Return to draft state for further configuration. Can not be already deployed"/>
+                        <button name="deployvm" states="ready" string="Deploy VM" type="object"
+                            help="Connect to provider and start VM as configured"/>
+                        <button name="startvm" states="deployedStopped" string="Start VM" type="object"
+                            help="Connect to provider and start a stopped deployed VM"/>
+                        <button name="destroyvm" states="deployedActive,deployedStopped" string="Destroy VM" type="object"
+                            help="!DANGER! Connect to provider and destroy a deployed VM" class="oe_highlight"/>
+                        <button name="stopvm" states="deployedActive" string="Stop VM" type="object"
+                            help="!DANGER! Connect to provider and stop an active  deployed VM" class="oe_highlight"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="name"/> 
+                            <field name="providerID" /> 
+                            <field name="ipv4" /> 
+                            <field name="server_fqdn" /> 
+                            <field name="notes"/> 
+                            <field name="provider_id"/> 
+                            <field name="server_status_id"/> 
+                            <field name="machine_type_id" domain="[('provider_id', '=', provider_id)]"/> 
+                            <field name="image_id" domain="[('provider_id', '=', provider_id)]"/> 
+                            <field name="zone_id" domain="[('provider_id', '=', provider_id)]"/> 
+                            <field name="time_zone" /> 
+                            <field name="disk_size" /> 
+                            <field name="ram_size" /> 
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="server_list_action">
+            <field name="name">Server</field>
+            <field name="res_model">cloudmanager.server</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Create the first server
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="server_menu" name="Server" parent="cloudmanager_menu"
+                  action="server_list_action"/>
+    </data>
+</openerp>
+
+

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="image_tree_view">
+            <field name="name">image.tree.view</field>
+            <field name="model">cloudmanager.image</field>
+            <field name="arch" type="xml">
+                <tree string="Image">
+                    <field name="name"/> 
+                    <field name="slug"/> 
+                    <field name="notes"/> 
+                    <field name="provider_id"/> 
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="image_form_view">
+            <field name="name">image.form.view</field>
+            <field name="model">cloudmanager.image</field>
+            <field name="arch" type="xml">
+                <form string="Image">
+                    <header>
+                        <button name="update" string="Update" type="object"
+                            help="Connect to provider and reload image info"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <field name="name"/> 
+                            <field name="slug"/> 
+                            <field name="notes"/> 
+                            <field name="provider_id"/> 
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="image_list_action">
+            <field name="name">Image</field>
+            <field name="res_model">cloudmanager.image</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Create the first image
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="image_menu" name="Image" parent="cloudmanager_menu"
+                  action="image_list_action"/>
+    </data>
+</openerp>
+
+
