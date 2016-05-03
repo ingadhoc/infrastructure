@@ -5,7 +5,7 @@ import requests
 from string import Template
 import json
 import time
-import constants
+from cloudmanager.models.constants import constants
 
 
 class CloudmanagerServer(models.Model):
@@ -47,9 +47,7 @@ class CloudmanagerServer(models.Model):
         required=True,
         string="Provider",
         help="The provider this server is using",
-        # TODO remove this, if we want a default we should use a function
-        # that try to search one, because 1 coudl not exist
-        # default=1
+        default=constants.GOOGLE_COMPUTE_ENGINE
     )
     machine_type_id = fields.Many2one(
         'cloudmanager.machinetype',
@@ -74,9 +72,7 @@ class CloudmanagerServer(models.Model):
         required=True,
         string="Server Status",
         help="The status of the server",
-        # TODO remove this, if we want a default we should use a function
-        # that try to search one, because 1 coudl not exist
-        # default=1,
+        default=constants.INITIAL_SETUP
     )
     providerID = fields.Char(
         string="ProviderID",
@@ -102,21 +98,16 @@ class CloudmanagerServer(models.Model):
         required=True,
         default='draft',
     )
-
     _sql_constraints = [
         ('server_fqdn_unique', 'UNIQUE(server_fqdn)',
             'Server FQDN must be unique'),
         ('name', 'UNIQUE(name)', 'name must be unique'),
     ]
 
-    # @api.multi
-    # @api.constrains('machine_type_id', 'provider_id')
-    # def check_machine_type(self):
-    #     for server in self:
-    #         if server.machine_type_id.provider_id != server.provider_id:
-    #             raise Warning(
-    #                 'Machine Type Provider must be of server provider')
 
+    ##
+    # check_machine_type
+    #   force refresh for UX UI check assignment
     @api.one
     @api.constrains('machine_type_id', 'provider_id')
     def check_machine_type(self):
@@ -130,20 +121,30 @@ class CloudmanagerServer(models.Model):
             raise ValidationError(_(
                 'Image Provider must be of selected server provider'))
 
+
+    ##
+    # onchange_provider
+    #   force refresh for UX UI
     @api.onchange('provider_id')
     def onchange_provider(self):
         self.machine_type_id = False
         self.image_id = False
         self.zone_id = False
 
+
+    ##
+    # to_draft
+    #   change to draft as long as server is not deployed
     @api.multi
     def to_draft(self):
+        if self.server_status_id.id != constants.INITIAL_SETUP:
+            raise ValidationError(_('VM must be at Initial Setup VM state'))
         self.write({'state': 'draft'})
-        # en esta manera hay dos problemas:
-        # 1. self tiene que ser un solo registro (no puede ser un listado)
-        # 2. usando write puedo escribir varios campos a la vez
-        # self.state = 'draft'
 
+
+    ##
+    # validate_server_fields
+    #   common basic field sanity checks
     @api.multi
     def validate_server_fields(self):
         """
@@ -165,6 +166,9 @@ class CloudmanagerServer(models.Model):
         return True
 
 
+    ##
+    # to_ready
+    #   checks and if possible changes state to ready
     @api.multi
     def to_ready(self):
 
@@ -188,10 +192,18 @@ class CloudmanagerServer(models.Model):
         self.write({'state': 'ready'})
         return True
 
+
+    ##
+    # GoogleComputeEngine_deployvm
+    #   Uses GCE v1 API to deploy a VM
     @api.multi
     def GoogleComputeEngine_deployvm(self):
         return True
 
+
+    ##
+    # DigitalOcean_deployvm
+    #   Uses Digitial Ocean v2 API to deploy a VM
     @api.multi
     def DigitalOcean_deployvm(self):
         Authorization = "Bearer " + str(self.provider_id.api_password)
@@ -199,22 +211,19 @@ class CloudmanagerServer(models.Model):
             "Content-Type": "application/json", "Authorization": Authorization
         }
         t = Template(self.provider_id.create_template)
-        # this depends on provider and template, since we use safe sub we can
-        # use provider prefixed mapping for API dependent name value pairs
         d = t.safe_substitute(
             name=self.server_fqdn,
             size=self.machine_type_id.slug,
             image=self.image_id.slug,
             zone=self.zone_id.slug,
         )
-        # raise ValidationError(d)
         r = requests.post(self.provider_id.api_url, headers=h, data=d)
         if r.status_code != 202 and r.status_code != 200:
-            raise ValidationError(_("Error: " + str(r.status_code) + '\n' + r.text + '\n' + str(h) + '\n' + str(d) + '\n' + self.provider_id.api_url))
+            raise ValidationError(_("Error: " + str(r.status_code) + '\n' +
+                    r.text + '\n' + str(h) + '\n' + str(d) +
+                     '\n' + self.provider_id.api_url))
         theJSON = json.loads(r.text)
-        # get provider ID
         vmid = False
-        #Digital Ocean type API provides ID
         if "id" in theJSON["droplet"]:
             vmid = theJSON["droplet"]["id"]
         if not vmid:
@@ -229,9 +238,10 @@ class CloudmanagerServer(models.Model):
         # end request VM creation
         ##
 
-        # we must check later (depends on provider?) to change server status
-        # to active schedule check creation and get IP number etc
-        # DO only at this time
+        # THIS WILL BE CHANGED to use the Odoo automation scheduling table
+        # We will create another method updateWaitingForDeploy()
+        # It will be called via this cron like jobqueue table.
+        # On success it will remove itself.
         time.sleep(20)
         vmidURL = self.provider_id.api_url+ str('/') + str(vmid)
         r = requests.get(vmidURL, headers=h)
@@ -250,21 +260,15 @@ class CloudmanagerServer(models.Model):
         self.write({
             'server_status_id': constants.ACTIVE,
             'ipv4': cipv4})
-
         return True
 
+
+    ##
+    # deployvm
+    #   front end for future plugin architecture for deploy VM for 
+    #   any cloud provider API
     @api.multi
     def deployvm(self):
-        """
-        deployvm
-            uses cloud provider API to create a running VM
-            uses DNS provider API to create an A record for VM
-        notes
-            initial development: we need to find out when we get the IP number
-                back
-            from different cloud provider APIs
-        """
-
         ##
         # Start Validate
         self.validate_server_fields()
@@ -286,7 +290,6 @@ class CloudmanagerServer(models.Model):
         # end Validate
         ##
 
-
         ##
         # request VM creation
         # notes
@@ -303,10 +306,18 @@ class CloudmanagerServer(models.Model):
         ##
         return True
 
+
+    ##
+    # GoogleComputeEngine_destroyvm
+    #   uses GCE v1 API to remove/delete/destroy a VM
     @api.multi
     def GoogleComputeEngine_destroyvm(self):
         return True
 
+
+    ##
+    # DigitalOcean_destroyvm
+    #   uses Digital Ocean v2 API to remove/delete/destroy a VM
     @api.multi
     def DigitalOcean_destroyvm(self):
         Authorization = "Bearer " + str(self.provider_id.api_password)
@@ -322,14 +333,22 @@ class CloudmanagerServer(models.Model):
         r = requests.delete(vmidURL,headers=h)
         if r.status_code != 204:
             raise ValidationError("Error destroyvm: "+str(r.status_code)+r.text)
-        #initial setup server status. ready state. remove IP and ID.
-        self.write({'server_status_id':constants.INITIAL_SETUP,'providerID':'','IPv4':'','state':'ready'})
+        # initial setup server status. ready state. remove IP and ID.
+        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'IPv4': '', 'state': 'ready'})
         return True
 
+
+    ##
+    # GoogleComputeEngine_stopvm
+    #   uses GCE v1 API to stop a VM
     @api.multi
     def GoogleComputeEngine_stopvm(self):
         return True
 
+
+    ##
+    # DigitalOcean_stopvm
+    #   uses Digital Ocean v2 API to stop a VM
     @api.multi
     def DigitalOcean_stopvm(self):
         Authorization = "Bearer " + str(self.provider_id.api_password)
@@ -342,7 +361,7 @@ class CloudmanagerServer(models.Model):
         if "status" in theJSON["droplet"]:
             if theJSON["droplet"]["status"] != "active":
                 if theJSON["droplet"]["status"] == "off":
-                    self.write({'server_status_id':constants.STOPPED,'state':'deployedStopped'})
+                    self.write({'server_status_id':constants.STOPPED, 'state': 'deployedStopped'})
                     return True
                 else:
                     raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
@@ -350,9 +369,9 @@ class CloudmanagerServer(models.Model):
         r = requests.post(vmidURL,headers=h,data=self.provider_id.stop_template)
         if r.status_code != 201:
             raise ValidationError("Error stopvm: "+str(r.status_code)+r.text)
-        #waiting for stop server status. deplyed stopped state.
-        self.write({'server_status_id':constants.WAITING_FOR_STOP,'state':'deployedStopped'})
-        #wait and check for status change, this is only for development testing
+        # waiting for stop server status. deplyed stopped state.
+        self.write({'server_status_id':constants.WAITING_FOR_STOP, 'state': 'deployedStopped'})
+        # wait and check for status change, this is only for development testing
         time.sleep(30)
         vmidURL=self.provider_id.api_url+str('/')+self.providerID
         r = requests.get(vmidURL,headers=h)
@@ -362,14 +381,19 @@ class CloudmanagerServer(models.Model):
         if "status" in theJSON["droplet"]:
             if theJSON["droplet"]["status"] != "off":
                 raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
-        #stopped
+        # stopped
         self.write({'server_status_id':constants.STOPPED})
         return True
+
 
     @api.multi
     def GoogleComputeEngine_startvm(self):
         return True
 
+
+    ##
+    # DigitalOcean_startvm
+    #   uses Digital Ocean 2.0 API to start a VM
     @api.multi
     def DigitalOcean_startvm(self):
         Authorization = "Bearer " + str(self.provider_id.api_password)
@@ -386,9 +410,9 @@ class CloudmanagerServer(models.Model):
         r = requests.post(vmidURL,headers=h,data=self.provider_id.start_template)
         if r.status_code != 201:
             raise ValidationError("Error startvm: "+str(r.status_code)+r.text)
-        #waiting for start server/reboot status. deployed active state.
-        self.write({'server_status_id':constants.WAITING_FOR_START,'state':'deployedActive'})
-        #wait and check for status change, this is only for development testing
+        # waiting for start server/reboot status. deployed active state.
+        self.write({'server_status_id':constants.WAITING_FOR_START, 'state': 'deployedActive'})
+        # wait and check for status change, this is only for development testing
         time.sleep(30)
         vmidURL=self.provider_id.api_url+str('/')+self.providerID
         r = requests.get(vmidURL,headers=h)
@@ -398,8 +422,8 @@ class CloudmanagerServer(models.Model):
         if "status" in theJSON["droplet"]:
             if theJSON["droplet"]["status"] != "active":
                 raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
-        #active
-        self.write({'server_status_id':'2'})
+        # active
+        self.write({'server_status_id': '2'})
         return True
 
 
@@ -409,7 +433,7 @@ class CloudmanagerServer(models.Model):
     @api.multi
     def destroyvm(self):
         ##
-        #Start Validate
+        # Start Validate
         if self.state != 'deployedActive' and self.state != 'deployedStopped':
             raise ValidationError('Can not destroy VMs that are not in  a workflow deployed state')
         if not self.provider_id.api_password:
@@ -418,11 +442,11 @@ class CloudmanagerServer(models.Model):
             raise ValidationError('VM provider must have a valid API URL defined')
         if self.server_status_id.id == constants.INITIAL_SETUP:
             raise ValidationError('VM must not be at Initial Setup VM status')
-        #end Validate
+        # end Validate
         ##
 
         ##
-        #request VM destroy
+        # request VM destroy
         if self.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
             self.GoogleComputeEngine_destroyvm()
         elif self.provider_id.id == constants.DIGITAL_OCEAN:
@@ -431,11 +455,11 @@ class CloudmanagerServer(models.Model):
 
     ##
     # stopvm
-    #   uses cloud provider API to destroy a VM
+    #   uses cloud provider API to stop a VM
     @api.multi
     def stopvm(self):
         ##
-        #Start Validate
+        # Start Validate
         if self.state != 'deployedActive':
             raise ValidationError('Can not stop VMs that are not in a workflow active deployed state')
         if not self.provider_id.api_password:
@@ -446,24 +470,25 @@ class CloudmanagerServer(models.Model):
             raise ValidationError('VM provider must have a valid API URL defined')
         if self.server_status_id.id == constants.INITIAL_SETUP:
             raise ValidationError('VM must not be at Initial Setup VM status')
-        #end Validate
+        # end Validate
         ##
 
         ##
-        #request VM stop
+        # request VM stop
         if self.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
             self.GoogleComputeEngine_stopvm()
         elif self.provider_id.id == constants.DIGITAL_OCEAN:
             self.DigitalOcean_stopvm()
         return True
 
+
     ##
     # startvm
-    #   uses cloud provider API to destroy a VM
+    #   uses cloud provider API to start a VM
     @api.multi
     def startvm(self):
         ##
-        #Start Validate
+        # Start Validate
         if self.state != 'deployedStopped':
             raise ValidationError('Can not start VMs that are not in a workflow stopped deployed state')
         if not self.provider_id.api_password:
@@ -474,11 +499,11 @@ class CloudmanagerServer(models.Model):
             raise ValidationError('VM provider must have a valid API URL defined')
         if self.server_status_id.id == constants.INITIAL_SETUP:
             raise ValidationError('VM must not be at Initial Setup VM status')
-        #end Validate
+        # end Validate
         ##
 
         ##
-        #request VM start
+        # request VM start
         if self.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
             self.GoogleComputeEngine_startvm()
         elif self.provider_id.id == constants.DIGITAL_OCEAN:
