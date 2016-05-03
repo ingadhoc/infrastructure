@@ -9,8 +9,7 @@
             <field name="res_model">cloudmanager.server</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <!-- we should do this in another way -->
-            <!-- <field name="domain">[('server_status_id','>',3)]</field> -->
+            <field name="domain">[('server_status_id','>',constants.STOPPED)]</field>
             <field name="domain">[]</field>
     </record>
     <record model="ir.actions.act_window" id="ops_panel_view">
@@ -18,8 +17,7 @@
             <field name="res_model">cloudmanager.server</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <!-- we should do this in another way -->
-            <!-- <field name="domain">[('server_status_id','&lt;=',3)]</field> -->
+            <field name="domain">[('server_status_id','&lt;=',constants.STOPPED)]</field>
             <field name="domain">[]</field>
 	</record>
 	<record model="ir.ui.view" id="cloudmanager_dashboard_set">

@@ -11,7 +11,7 @@ class CloudmanagerProvider(models.Model):
         required=True,
         help="Name of the cloud provider organization",
     )
-    creata_template = fields.Text(
+    create_template = fields.Text(
         help="REST Create template",
     )
     delete_template = fields.Text(

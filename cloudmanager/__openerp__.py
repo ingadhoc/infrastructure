@@ -2,8 +2,11 @@
 {
     'name': "Cloud Manager",
     'summary': """
-The Cloud Manager helps you create and manage a hybrid set of virtual
+The Cloud Manager helps you create and manage a multi vendor set of virtual
 machines.""",
+    'description':"""
+Manage public cloud provider VM lifecycle. Supports Google Compute Engine VMs and Digital Ocean Droplets. Easily extensible
+to other public and private cloud provider APIs like Rackspace, Amazon (AWS) and OpenStack. Provides optional DNS Automation.""",
     'author': "ADHOC SA, Gary Wallis for Unixservice LLC.",
     'website': "www.adhoc.com.ar",
     'license': 'AGPL-3',
@@ -36,7 +39,7 @@ machines.""",
     ],
     # only loaded in demonstration mode
     'demo': [
-        # 'demo/cloudmanager_server_demo.xml',
+        'demo/cloudmanager_server_demo.xml',
     ],
     'test': [
     ],

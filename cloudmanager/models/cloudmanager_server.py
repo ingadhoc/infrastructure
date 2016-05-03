@@ -5,6 +5,7 @@ import requests
 from string import Template
 import json
 import time
+import constants
 
 
 class CloudmanagerServer(models.Model):
@@ -80,7 +81,7 @@ class CloudmanagerServer(models.Model):
     providerID = fields.Char(
         string="ProviderID",
         readonly=True,
-        help="Cloud provider ID assigned on VM creation",
+        help="ID assigned on VM creation/deploy by some public cloud providers",
     )
     ipv4 = fields.Char(
         string="IPv4",
@@ -144,22 +145,11 @@ class CloudmanagerServer(models.Model):
         # self.state = 'draft'
 
     @api.multi
-    def to_ready(self):
-        # TODO borrar varias de las validaciones porque si los campos son
-        # required ya no hace falta esta validación
-        if self.state != 'draft':
-            raise ValidationError(_(
-                'Can not change to ready VMs that are not in the workflow '
-                'draft state'))
-        if not self.provider_id.fcAPIPasswd:
-            raise ValidationError(_(
-                'VM provider must have bearer token fcAPIPasswd defined'))
-        if not self.provider_id.ftCreateTemplate:
-            raise ValidationError(_(
-                'VM provider must have ftCreateTemplate defined'))
-        if not self.provider_id.fcAPIURL:
-            raise ValidationError(_(
-                'VM provider must have an API URL defined'))
+    def validate_server_fields(self):
+        """
+        validate_server_fields
+            basic server field validation
+        """
         if not self.name:
             raise ValidationError(_('VM must have a name'))
         if not self.notes:
@@ -172,9 +162,95 @@ class CloudmanagerServer(models.Model):
             raise ValidationError(_('VM must have an OS image '))
         if not self.zone_id:
             raise ValidationError(_('VM must have a provider zone'))
-        if self.server_status_id.id != 1:
-            raise ValidationError('VM must be at Initial Setup VM state')
+        return True
+
+
+    @api.multi
+    def to_ready(self):
+
+        self.validate_server_fields()
+
+        if self.state != 'draft':
+            raise ValidationError(_(
+                'Can not change to ready VMs that are not in the workflow '
+                'draft state'))
+        if not self.provider_id.api_password:
+            raise ValidationError(_(
+                'VM provider must have api_password defined'))
+        if not self.provider_id.create_template:
+            raise ValidationError(_(
+                'VM provider must have create_template defined'))
+        if not self.provider_id.api_url:
+            raise ValidationError(_(
+                'VM provider must have an API URL defined'))
+        if self.server_status_id.id != constants.INITIAL_SETUP:
+            raise ValidationError(_('VM must be at Initial Setup VM state'))
         self.write({'state': 'ready'})
+        return True
+
+    @api.multi
+    def GoogleComputeEngine_deployvm(self):
+        return True
+
+    @api.multi
+    def DigitalOcean_deployvm(self):
+        Authorization = "Bearer " + str(self.provider_id.api_password)
+        h = {
+            "Content-Type": "application/json", "Authorization": Authorization
+        }
+        t = Template(self.provider_id.create_template)
+        # this depends on provider and template, since we use safe sub we can
+        # use provider prefixed mapping for API dependent name value pairs
+        d = t.safe_substitute(
+            name=self.server_fqdn,
+            size=self.machine_type_id.slug,
+            image=self.image_id.slug,
+            zone=self.zone_id.slug,
+        )
+        # raise ValidationError(d)
+        r = requests.post(self.provider_id.api_url, headers=h, data=d)
+        if r.status_code != 202 and r.status_code != 200:
+            raise ValidationError(_("Error: " + str(r.status_code) + '\n' + r.text + '\n' + str(h) + '\n' + str(d) + '\n' + self.provider_id.api_url))
+        theJSON = json.loads(r.text)
+        # get provider ID
+        vmid = False
+        #Digital Ocean type API provides ID
+        if "id" in theJSON["droplet"]:
+            vmid = theJSON["droplet"]["id"]
+        if not vmid:
+            raise ValidationError(_("Error: No droplet ID returned"))
+
+        # if valid ID we can place server in waiting for deploy server status
+        self.write({
+            'state': 'deployedActive',
+            'server_status_id': constants.WAITING_FOR_DEPLOYMENT,
+            'providerID': vmid
+        })
+        # end request VM creation
+        ##
+
+        # we must check later (depends on provider?) to change server status
+        # to active schedule check creation and get IP number etc
+        # DO only at this time
+        time.sleep(20)
+        vmidURL = self.provider_id.api_url+ str('/') + str(vmid)
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code != 200:
+            raise ValidationError(_(
+                "Error getting VM data: %s%s") % (r.status_code, r.text))
+        theJSON = json.loads(r.text)
+        if (
+                "networks" in theJSON["droplet"] and
+                "v4" in theJSON["droplet"]["networks"]):
+            for i in theJSON["droplet"]["networks"]["v4"]:
+                cipv4 = i["ip_address"]
+                break
+        if not cipv4:
+            raise ValidationError(_("Error no ipv4: %s") % theJSON["droplet"]["networks"])
+        self.write({
+            'server_status_id': constants.ACTIVE,
+            'ipv4': cipv4})
+
         return True
 
     @api.multi
@@ -188,114 +264,223 @@ class CloudmanagerServer(models.Model):
                 back
             from different cloud provider APIs
         """
+
+        ##
         # Start Validate
+        self.validate_server_fields()
+
         if self.state != 'ready':
             raise ValidationError(_(
                 'Can not deploy VMs that are not in workflow ready state'))
-        # TODO this check should be different and not to a related id
-        # perhups we can check if start_template is set ond provider or
-        # something else.
-        # if not self.provider_id.id == 2:
-        #     raise ValidationError(_(
-        #         'VM provider %s is not supported for deploy yet') % (
-        #         self.provider_id.name))
-        if not self.provider_id.fcAPIPasswd:
+        if not self.provider_id.api_password:
             raise ValidationError(_(
-                'VM provider must have bearer token fcAPIPasswd defined'))
-        if not self.provider_id.ftCreateTemplate:
+                'VM provider must have api_passwd defined'))
+        if not self.provider_id.create_template:
             raise ValidationError(_(
-                'VM provider must have ftCreateTemplate defined'))
-        if not self.provider_id.fcAPIURL:
+                'VM provider must have create_template defined'))
+        if not self.provider_id.api_url:
             raise ValidationError(_(
                 'VM provider must have an API URL defined'))
-        if not self.notes:
-            raise ValidationError(_('VM must have notes'))
-        if not self.image_id.fcSlug:
-            raise ValidationError(_('VM must have an OS image '))
-        if not self.zone_id.fcSlug:
-            raise ValidationError(_('VM must have a provider zone'))
-        if not self.provider_id:
-            raise ValidationError(_('VM must have a provider'))
-        if not self.machine_type_id.fcSlug:
-            raise ValidationError(_('VM must have a machine type'))
-        if self.server_status_id.id != 1:
+        if self.server_status_id.id != constants.INITIAL_SETUP:
             raise ValidationError(_('VM must be at Initial Setup VM status'))
         # end Validate
         ##
 
-        ##
-        # r equest VM creation
-        Authorization = "Bearer " + str(self.provider_id.fcAPIPasswd)
-        h = {
-            "Content-Type": "application/json", "Authorization": Authorization
-        }
-        t = Template(self.provider_id.ftCreateTemplate)
-        # this depends on provider and template, since we use safe sub we can
-        # use provider prefixed mapping for API dependent name value pairs
-        d = t.safe_substitute(
-            name=self.server_FQDN,
-            size=self.machine_type_id.fcSlug,
-            image=self.image_id.fcSlug,
-            zone=self.zone_id.fcSlug,
-        )
-        # raise ValidationError(d)
-        r = requests.post(self.provider_id.fcAPIURL, headers=h, data=d)
-        if r.status_code != 202 and r.status_code != 200:
-            # TODO use %
-            raise ValidationError("Error: " + str(r.status_code) + r.text)
-        theJSON = json.loads(r.text)
-        # TODO this check should be different and not to a related id
-        # we add this dumm id till fix
-        vmid = False
-        # if self.provider_id.id == 2:
-        #     if "id" in theJSON["droplet"]:
-        #         vmid = theJSON["droplet"]["id"]
-        #     if not vmid:
-        #         # TODO use %
-        #         raise ValidationError("Error no VM ID: "+theJSON["droplet"])
-        # else:
-        #     # TODO use %
-        #     raise ValidationError(
-        #         "Error unsupported provider: "+self.provider_id.name)
 
-        # get provider ID
-        # if valid ID we can place server in waiting for deploy server status
-        self.write({
-            'state': 'deployedActive',
-            # TODO we should get this status by other way, not id
-            # 'server_status_id': '4',
-            'providerID': vmid
-        })
-        # end request VM creation
         ##
+        # request VM creation
+        # notes
 
-        # we must check later (depends on provider?) to change server status
-        # to active schedule check creation and get IP number etc
-        # DO only at this time
-        time.sleep(30)
-        vmidURL = self.provider_id.fcAPIURL + str('/') + str(vmid)
-        r = requests.get(vmidURL, headers=h)
-        if r.status_code != 200:
-            raise ValidationError(_(
-                "Error getting VM data: %s%s") % (r.status_code, r.text))
-        theJSON = json.loads(r.text)
-        if (
-                "networks" in theJSON["droplet"] and
-                "v4" in theJSON["droplet"]["networks"]):
-            for i in theJSON["droplet"]["networks"]["v4"]:
-                cipv4 = i["ip_address"]
-                break
-        if not cipv4:
-            raise ValidationError(_(
-                "Error no ipv4: %s") % theJSON["droplet"]["networks"])
-        self.write({
-            # TODO we should get this status by other way, not id
-            # 'server_status_id': '2',
-            'fcipv4': cipv4})
+        if self.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
+            self.GoogleComputeEngine_deployvm()
+        elif self.provider_id.id == constants.DIGITAL_OCEAN:
+            self.DigitalOcean_deployvm()
 
         ##
         # start DNS API
         # post DNS A zone creation request
         # end DNS API
         ##
+        return True
+
+    @api.multi
+    def GoogleComputeEngine_destroyvm(self):
+        return True
+
+    @api.multi
+    def DigitalOcean_destroyvm(self):
+        Authorization = "Bearer " + str(self.provider_id.api_password)
+        h = {"Content-Type": "application/json","Authorization": Authorization}
+        vmidURL=self.provider_id.api_url+str('/')+self.providerID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "active" and theJSON["droplet"]["status"] != "off":
+                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        r = requests.delete(vmidURL,headers=h)
+        if r.status_code != 204:
+            raise ValidationError("Error destroyvm: "+str(r.status_code)+r.text)
+        #initial setup server status. ready state. remove IP and ID.
+        self.write({'server_status_id':constants.INITIAL_SETUP,'providerID':'','IPv4':'','state':'ready'})
+        return True
+
+    @api.multi
+    def GoogleComputeEngine_stopvm(self):
+        return True
+
+    @api.multi
+    def DigitalOcean_stopvm(self):
+        Authorization = "Bearer " + str(self.provider_id.api_password)
+        h = {"Content-Type": "application/json","Authorization": Authorization}
+        vmidURL=self.provider_id.api_url+str('/')+self.providerID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "active":
+                if theJSON["droplet"]["status"] == "off":
+                    self.write({'server_status_id':constants.STOPPED,'state':'deployedStopped'})
+                    return True
+                else:
+                    raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        vmidURL=self.provider_id.api_url+str('/')+self.providerID+str('/actions')
+        r = requests.post(vmidURL,headers=h,data=self.provider_id.stop_template)
+        if r.status_code != 201:
+            raise ValidationError("Error stopvm: "+str(r.status_code)+r.text)
+        #waiting for stop server status. deplyed stopped state.
+        self.write({'server_status_id':constants.WAITING_FOR_STOP,'state':'deployedStopped'})
+        #wait and check for status change, this is only for development testing
+        time.sleep(30)
+        vmidURL=self.provider_id.api_url+str('/')+self.providerID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "off":
+                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        #stopped
+        self.write({'server_status_id':constants.STOPPED})
+        return True
+
+    @api.multi
+    def GoogleComputeEngine_startvm(self):
+        return True
+
+    @api.multi
+    def DigitalOcean_startvm(self):
+        Authorization = "Bearer " + str(self.provider_id.api_password)
+        h = {"Content-Type": "application/json","Authorization": Authorization}
+        vmidURL=self.provider_id.api_url+str('/')+self.providerID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "off":
+                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        vmidURL=self.provider_id.api_url+str('/')+self.providerID+str('/actions')
+        r = requests.post(vmidURL,headers=h,data=self.provider_id.start_template)
+        if r.status_code != 201:
+            raise ValidationError("Error startvm: "+str(r.status_code)+r.text)
+        #waiting for start server/reboot status. deployed active state.
+        self.write({'server_status_id':constants.WAITING_FOR_START,'state':'deployedActive'})
+        #wait and check for status change, this is only for development testing
+        time.sleep(30)
+        vmidURL=self.provider_id.api_url+str('/')+self.providerID
+        r = requests.get(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
+        theJSON=json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "active":
+                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
+        #active
+        self.write({'server_status_id':'2'})
+        return True
+
+
+    ##
+    # destroyvm
+    #   uses cloud provider API to destroy a VM
+    @api.multi
+    def destroyvm(self):
+        ##
+        #Start Validate
+        if self.state != 'deployedActive' and self.state != 'deployedStopped':
+            raise ValidationError('Can not destroy VMs that are not in  a workflow deployed state')
+        if not self.provider_id.api_password:
+            raise ValidationError('VM provider must have api_password defined')
+        if not self.provider_id.api_url:
+            raise ValidationError('VM provider must have a valid API URL defined')
+        if self.server_status_id.id == constants.INITIAL_SETUP:
+            raise ValidationError('VM must not be at Initial Setup VM status')
+        #end Validate
+        ##
+
+        ##
+        #request VM destroy
+        if self.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
+            self.GoogleComputeEngine_destroyvm()
+        elif self.provider_id.id == constants.DIGITAL_OCEAN:
+            self.DigitalOcean_destroyvm()
+        return True
+
+    ##
+    # stopvm
+    #   uses cloud provider API to destroy a VM
+    @api.multi
+    def stopvm(self):
+        ##
+        #Start Validate
+        if self.state != 'deployedActive':
+            raise ValidationError('Can not stop VMs that are not in a workflow active deployed state')
+        if not self.provider_id.api_password:
+            raise ValidationError('VM provider must have api_password defined')
+        if not self.provider_id.stop_template:
+            raise ValidationError('VM provider must have valid stop_template')
+        if not self.provider_id.api_url:
+            raise ValidationError('VM provider must have a valid API URL defined')
+        if self.server_status_id.id == constants.INITIAL_SETUP:
+            raise ValidationError('VM must not be at Initial Setup VM status')
+        #end Validate
+        ##
+
+        ##
+        #request VM stop
+        if self.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
+            self.GoogleComputeEngine_stopvm()
+        elif self.provider_id.id == constants.DIGITAL_OCEAN:
+            self.DigitalOcean_stopvm()
+        return True
+
+    ##
+    # startvm
+    #   uses cloud provider API to destroy a VM
+    @api.multi
+    def startvm(self):
+        ##
+        #Start Validate
+        if self.state != 'deployedStopped':
+            raise ValidationError('Can not start VMs that are not in a workflow stopped deployed state')
+        if not self.provider_id.api_password:
+            raise ValidationError('VM provider must have api_password defined')
+        if not self.provider_id.start_template:
+            raise ValidationError('VM provider must have valid start_template')
+        if not self.provider_id.api_url:
+            raise ValidationError('VM provider must have a valid API URL defined')
+        if self.server_status_id.id == constants.INITIAL_SETUP:
+            raise ValidationError('VM must not be at Initial Setup VM status')
+        #end Validate
+        ##
+
+        ##
+        #request VM start
+        if self.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
+            self.GoogleComputeEngine_startvm()
+        elif self.provider_id.id == constants.DIGITAL_OCEAN:
+            self.DigitalOcean_startvm()
         return True

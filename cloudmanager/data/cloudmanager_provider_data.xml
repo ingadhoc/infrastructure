@@ -1,18 +1,64 @@
 <openerp>
     <data>
         <record model="cloudmanager.provider" id="google_compute_engine_VM">
+            <field name="id">1</field>
             <field name="name">google_compute_engine_VM</field>
 	    <field name ="notes">Google Cloud Platform Compute Engine is the very long name of this Google VM service.
 The VMs are also referred to as instances.
 Main web app: https://console.cloud.google.com/compute
 	    </field>
+	    <field name="create_template">{
+    "name": "$name",
+    "machineType": "zones/$zone/machineTypes/$size",
+    "networkInterfaces": [{
+      "accessConfigs": [{
+        "type": "ONE_TO_ONE_NAT",
+        "name": "External NAT"
+       }],
+      "network": "global/networks/default"
+    }],
+    "disks": [{
+       "autoDelete": "true",
+       "boot": "true",
+       "type": "PERSISTENT",
+       "initializeParams": {
+          "sourceImage": "projects/project-name/global/images/$image"
+
+       }
+     }]
+}</field>
+	    <field name="delete_template">URI_TEMPLATE DELETE https://www.googleapis.com/compute/v1/projects/project-name/zones/$zone/instances/$name</field>
+	    <field name="start_template">URI_TEMPLATE DELETE https://www.googleapis.com/compute/v1/projects/project-name/zones/$zone/instances/$name/start</field>
+	    <field name="stop_template">URI_TEMPLATE DELETE https://www.googleapis.com/compute/v1/projects/project-name/zones/$zone/instances/$name/stop</field>
+	    <field name="api_url">URI_TEMPLATE https://www.googleapis.com/compute/v1/projects/project-name/zones/$zone/instances</field>
         </record>
         <record model="cloudmanager.provider" id="digitalOcean_droplet">
+            <field name="id">2</field>
             <field name="name">digitalOcean_droplet</field>
 	    <field name ="notes">DigitalOcean has a much simpler and terse VM nomenclature.
 Droplets are just VMs.
 Main web app: https://cloud.digitalocean.com
 	    </field>
+	    <field name="api_url">https://api.digitalocean.com/v2/droplets</field>
+	    <field name="start_template">{
+  "type": "power_on"
+}</field>
+	    <field name="stop_template">{
+  "type": "power_off"
+}</field>
+	    <field name="create_template">{
+  "name": "$name",
+  "region": "$zone",
+  "size": "$size",
+  "image": "$image",
+  "ssh_keys": null,
+  "backups": false,
+  "ipv6": false,
+  "user_data": null,
+  "private_networking": null
+}</field>
+	    <field name="delete_template">URI_TEMPLATE DELETE https://api.digitalocean.com/v2/droplets/$vmid"
+        </field>
         </record>
     </data>
 </openerp>

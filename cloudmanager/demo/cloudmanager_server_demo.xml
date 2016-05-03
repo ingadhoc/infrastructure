@@ -18,7 +18,7 @@
             <field name="server_fqdn">mx1.acme.net</field>
             <field name="notes">postfix incoming mx gateway mail server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
-            <field name="server_status_id" ref="active"/>
+            <field name="server_status_id" ref="initial_setup"/>
             <field name="ram_size">1GB</field>
             <field name="disk_size">200GB-SSD</field>
             <field name="machine_type_id" ref="n1-standard-1"/>
@@ -31,7 +31,7 @@
             <field name="server_fqdn">smtp0.acme.net</field>
             <field name="notes">postfix outgoing smtp relay mail server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
-            <field name="server_status_id" ref="active"/>
+            <field name="server_status_id" ref="initial_setup"/>
             <field name="ram_size">1GB</field>
             <field name="disk_size">200GB-SSD</field>
             <field name="machine_type_id" ref="n1-standard-1"/>
@@ -44,7 +44,7 @@
             <field name="server_fqdn">smtp1.acme.net</field>
             <field name="notes">postfix outgoing smtp relay mail server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
-            <field name="server_status_id" ref="waiting_for_deployment"/>
+            <field name="server_status_id" ref="initial_setup"/>
             <field name="ram_size">1GB</field>
             <field name="disk_size">200GB-SSD</field>
             <field name="machine_type_id" ref="n1-standard-1"/>
@@ -57,7 +57,7 @@
             <field name="server_fqdn">store0.acme.net</field>
             <field name="notes">a-j postfix smtp pop mail store server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
-            <field name="server_status_id" ref="active"/>
+            <field name="server_status_id" ref="initial_setup"/>
             <field name="ram_size">1GB</field>
             <field name="disk_size">200GB-SSD</field>
             <field name="machine_type_id" ref="n1-standard-1"/>
@@ -70,7 +70,7 @@
             <field name="server_fqdn">store1.acme.net</field>
             <field name="notes">k-z postfix smtp pop mail store server</field>
             <field name="provider_id" ref="google_compute_engine_VM"/>
-            <field name="server_status_id" ref="stopped"/>
+            <field name="server_status_id" ref="initial_setup"/>
             <field name="ram_size">1GB</field>
             <field name="disk_size">200GB-SSD</field>
             <field name="machine_type_id" ref="n1-standard-1"/>
@@ -83,7 +83,7 @@
             <field name="server_fqdn">dev0.acme.net</field>
             <field name="notes">Development server</field>
             <field name="provider_id" ref="digitalOcean_droplet"/>
-            <field name="server_status_id" ref="active"/>
+            <field name="server_status_id" ref="initial_setup"/>
             <field name="ram_size">512MB</field>
             <field name="disk_size">10GB-SSD</field>
             <field name="machine_type_id" ref="Size $5"/>
