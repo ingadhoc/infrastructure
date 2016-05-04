@@ -5,13 +5,20 @@ import requests
 from string import Template
 import json
 import time
-from cloudmanager.models.constants import constants
+import constants
+from oauth2client.service_account import ServiceAccountCredentials
+from httplib2 import Http
+import logging
+_logger = logging.getLogger(__name__)
 
 
 class CloudmanagerServer(models.Model):
     _name = 'cloudmanager.server'
     _description = 'The server instance'
 
+    ##
+    # Schema definitions
+    #
     name = fields.Char(
         required=True,
         readonly=True,
@@ -104,6 +111,9 @@ class CloudmanagerServer(models.Model):
         ('name', 'UNIQUE(name)', 'name must be unique'),
     ]
 
+    ##
+    # Class Methods
+    #   first schema and view/UI related later the important ones
 
     ##
     # check_machine_type
@@ -198,6 +208,42 @@ class CloudmanagerServer(models.Model):
     #   Uses GCE v1 API to deploy a VM
     @api.multi
     def GoogleComputeEngine_deployvm(self):
+
+        scopes = ['https://www.googleapis.com/auth/compute']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
+        credentials.refresh_token = self.provider_id.api_password
+        credentials.refresh(Http())
+        Authorization = "Bearer " + str(credentials.access_token)
+        h = {
+            "Content-Type": "application/json", "Authorization": Authorization
+        }
+        t = Template(self.provider_id.create_template)
+        d = t.safe_substitute(
+            name=self.name,
+            size=self.machine_type_id.slug,
+            image=self.image_id.slug,
+            zone=self.zone_id.slug,
+        )
+        api_template = Template(self.provider_id.api_url)
+        api_cooked = api_template.safe_substitute(
+            zone=self.zone_id.slug,
+        )
+        r = requests.post(api_cooked, headers=h, data=d)
+        if r.status_code != 200:
+            raise ValidationError(_("Error: " + str(r.status_code) + '\n' +
+                    r.text + '\n' + str(h) + '\n' + str(d) +
+                     '\n' + str(api_cooked)))
+        theJSON = json.loads(r.text)
+        vmid = False
+        if "id" in theJSON:
+            vmid = theJSON["id"]
+        if not vmid:
+            raise ValidationError(_("Error: No VM ID returned"))
+        self.write({
+            'state': 'deployedActive',
+            'server_status_id': constants.WAITING_FOR_DEPLOYMENT,
+            'providerID': vmid
+        })
         return True
 
 
@@ -218,7 +264,7 @@ class CloudmanagerServer(models.Model):
             zone=self.zone_id.slug,
         )
         r = requests.post(self.provider_id.api_url, headers=h, data=d)
-        if r.status_code != 202 and r.status_code != 200:
+        if r.status_code != 202:
             raise ValidationError(_("Error: " + str(r.status_code) + '\n' +
                     r.text + '\n' + str(h) + '\n' + str(d) +
                      '\n' + self.provider_id.api_url))
@@ -300,10 +346,51 @@ class CloudmanagerServer(models.Model):
             self.DigitalOcean_deployvm()
 
         ##
-        # start DNS API
+        # start DNS API TODO
         # post DNS A zone creation request
         # end DNS API
         ##
+        return True
+
+    ##
+    # DigitalOcean_HasServerDeployed
+    #   check provider to see if VM is up and running
+    #   if it is change status to active
+    @api.multi
+    def DigitalOcean_HasServerDeployed(self):
+        return True
+
+
+    ##
+    # GoogleComputeEngine_HasServerDeployed
+    @api.multi
+    def GoogleComputeEngine_HasServerDeployed(self):
+        return True
+
+
+    ##
+    # HasServerDeployed
+    #   This method is to be called from scheduled actions subsystem
+    def HasServerDeployed(self, cr, uid, context=None):
+
+        _logger.info('start')
+
+        server_obj = self.pool.get('cloudmanager.server')
+        # find out how to restrict to a search set from Juan
+        server_ids = self.pool.get('cloudmanager.server').search(cr, uid, [])   
+        for server_id in server_ids :
+            line = server_obj.browse(cr, uid,server_id ,context=context)
+            _logger.info('provider_id: ' + line.provider_id)
+        
+        return True
+
+        if self.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
+            self.GoogleComputeEngine_HasServerDeployed()
+        elif self.provider_id.id == constants.DIGITAL_OCEAN:
+            self.DigitalOcean_HasServerDeployed()
+
+        _logger.info('end')
+
         return True
 
 

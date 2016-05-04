@@ -9,16 +9,14 @@
             <field name="res_model">cloudmanager.server</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('server_status_id','>',constants.STOPPED)]</field>
-            <field name="domain">[]</field>
+            <field name="domain">[('server_status_id','>',3)]</field>
     </record>
     <record model="ir.actions.act_window" id="ops_panel_view">
             <field name="name">End State VMs</field>
             <field name="res_model">cloudmanager.server</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('server_status_id','&lt;=',constants.STOPPED)]</field>
-            <field name="domain">[]</field>
+            <field name="domain">[('server_status_id','&lt;=',3)]</field>
 	</record>
 	<record model="ir.ui.view" id="cloudmanager_dashboard_set">
             <field name="name">Cloud Manager Dashboard Form1</field>
