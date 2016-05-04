@@ -208,7 +208,8 @@ class CloudmanagerServer(models.Model):
     #   Uses GCE v1 API to deploy a VM
     @api.multi
     def GoogleComputeEngine_deployvm(self):
-
+        if not self.provider_id.api_user:
+            raise ValidationError("Error deployvm: provider api_user is required for project name")
         scopes = ['https://www.googleapis.com/auth/compute']
         credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
         credentials.refresh_token = self.provider_id.api_password
@@ -227,6 +228,7 @@ class CloudmanagerServer(models.Model):
         api_template = Template(self.provider_id.api_url)
         api_cooked = api_template.safe_substitute(
             zone=self.zone_id.slug,
+            project=self.provider_id.api_user,
         )
         r = requests.post(api_cooked, headers=h, data=d)
         if r.status_code != 200:
@@ -244,6 +246,26 @@ class CloudmanagerServer(models.Model):
             'server_status_id': constants.WAITING_FOR_DEPLOYMENT,
             'providerID': vmid
         })
+
+        # This will be changed shortly to use the callback scheduled actions function
+        time.sleep(20)
+        vmidURL = api_cooked + str('/') + str(self.name)
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code != 200:
+            raise ValidationError(_(
+                "Error getting VM data: %s%s") % (r.status_code, r.text))
+        theJSON = json.loads(r.text)
+        cipv4 = False
+        if "networkInterfaces" in theJSON:
+            for i in theJSON["networkInterfaces"]:
+                for j in i["accessConfigs"]:
+                    cipv4 = j["natIP"]
+                    break
+        if not cipv4:
+            raise ValidationError(_("Error no ipv4: %s") % theJSON["networkInterfaces"])
+        self.write({
+            'server_status_id': constants.ACTIVE,
+            'ipv4': cipv4})
         return True
 
 
@@ -285,9 +307,6 @@ class CloudmanagerServer(models.Model):
         ##
 
         # THIS WILL BE CHANGED to use the Odoo automation scheduling table
-        # We will create another method updateWaitingForDeploy()
-        # It will be called via this cron like jobqueue table.
-        # On success it will remove itself.
         time.sleep(20)
         vmidURL = self.provider_id.api_url+ str('/') + str(vmid)
         r = requests.get(vmidURL, headers=h)
@@ -399,6 +418,27 @@ class CloudmanagerServer(models.Model):
     #   uses GCE v1 API to remove/delete/destroy a VM
     @api.multi
     def GoogleComputeEngine_destroyvm(self):
+        if not self.provider_id.api_user:
+            raise ValidationError("Error destroyvm: provider api_user is required for project name")
+        scopes = ['https://www.googleapis.com/auth/compute']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
+        credentials.refresh_token = self.provider_id.api_password
+        credentials.refresh(Http())
+        Authorization = "Bearer " + str(credentials.access_token)
+        h = {
+            "Content-Type": "application/json", "Authorization": Authorization
+        }
+        api_template = Template(self.provider_id.api_url)
+        api_cooked = api_template.safe_substitute(
+            zone=self.zone_id.slug,
+            project=self.provider_id.api_user,
+        )
+        vmidURL=api_cooked+str('/')+self.name
+        r = requests.delete(vmidURL,headers=h)
+        if r.status_code != 204 and r.status_code != 200:
+            raise ValidationError("Error destroyvm: "+str(r.status_code)+r.text)
+        # initial setup server status. ready state. remove IP and ID.
+        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'IPv4': '', 'state': 'ready'})
         return True
 
 
@@ -430,6 +470,27 @@ class CloudmanagerServer(models.Model):
     #   uses GCE v1 API to stop a VM
     @api.multi
     def GoogleComputeEngine_stopvm(self):
+        if not self.provider_id.api_user:
+            raise ValidationError("Error stopvm: provider api_user is required for project name")
+        scopes = ['https://www.googleapis.com/auth/compute']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
+        credentials.refresh_token = self.provider_id.api_password
+        credentials.refresh(Http())
+        Authorization = "Bearer " + str(credentials.access_token)
+        h = {
+            "Content-Type": "application/json", "Authorization": Authorization
+        }
+        api_template = Template(self.provider_id.api_url)
+        api_cooked = api_template.safe_substitute(
+            zone=self.zone_id.slug,
+            project=self.provider_id.api_user,
+        )
+        vmidURL=api_cooked+str('/')+self.name+str('/stop')
+        r = requests.post(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error stopvm: "+str(r.status_code)+r.text)
+        # initial setup server status. ready state. remove IP and ID.
+        self.write({'server_status_id': constants.STOPPED,'state': 'deployedStopped'})
         return True
 
 
@@ -459,7 +520,7 @@ class CloudmanagerServer(models.Model):
         # waiting for stop server status. deplyed stopped state.
         self.write({'server_status_id':constants.WAITING_FOR_STOP, 'state': 'deployedStopped'})
         # wait and check for status change, this is only for development testing
-        time.sleep(30)
+        time.sleep(20)
         vmidURL=self.provider_id.api_url+str('/')+self.providerID
         r = requests.get(vmidURL,headers=h)
         if r.status_code != 200:
@@ -473,8 +534,32 @@ class CloudmanagerServer(models.Model):
         return True
 
 
+    ##
+    # GoogleComputeEngine_startvm
+    #   start a stopped VM instance
     @api.multi
     def GoogleComputeEngine_startvm(self):
+        if not self.provider_id.api_user:
+            raise ValidationError("Error startvm: provider api_user is required for project name")
+        scopes = ['https://www.googleapis.com/auth/compute']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
+        credentials.refresh_token = self.provider_id.api_password
+        credentials.refresh(Http())
+        Authorization = "Bearer " + str(credentials.access_token)
+        h = {
+            "Content-Type": "application/json", "Authorization": Authorization
+        }
+        api_template = Template(self.provider_id.api_url)
+        api_cooked = api_template.safe_substitute(
+            zone=self.zone_id.slug,
+            project=self.provider_id.api_user,
+        )
+        vmidURL=api_cooked+str('/')+self.name+str('/start')
+        r = requests.post(vmidURL,headers=h)
+        if r.status_code != 200:
+            raise ValidationError("Error startvm: "+str(r.status_code)+r.text)
+        # initial setup server status. ready state. remove IP and ID.
+        self.write({'server_status_id': constants.ACTIVE,'state': 'deployedActive'})
         return True
 
 
@@ -500,7 +585,7 @@ class CloudmanagerServer(models.Model):
         # waiting for start server/reboot status. deployed active state.
         self.write({'server_status_id':constants.WAITING_FOR_START, 'state': 'deployedActive'})
         # wait and check for status change, this is only for development testing
-        time.sleep(30)
+        time.sleep(20)
         vmidURL=self.provider_id.api_url+str('/')+self.providerID
         r = requests.get(vmidURL,headers=h)
         if r.status_code != 200:

@@ -33,7 +33,7 @@ class CloudmanagerProvider(models.Model):
     )
     api_user = fields.Char(
         string="API User",
-        help="API login or username",
+        help="API login or username, GCE project name",
     )
     # for convention do not strip field names
     api_password = fields.Char(
