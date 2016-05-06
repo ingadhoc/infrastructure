@@ -4,7 +4,6 @@ from openerp.exceptions import ValidationError
 import requests
 from string import Template
 import json
-import time
 import constants
 from oauth2client.service_account import ServiceAccountCredentials
 from httplib2 import Http
@@ -346,6 +345,165 @@ class CloudmanagerServer(models.Model):
         ##
         return True
 
+
+    ##
+    # DigitalOcean_HasServerStopped
+    #   check provider to see if VM has been stopped
+    #   if it is change status to stopped
+    def DigitalOcean_HasServerStopped(self):
+        _logger.info('server id: ' + str(self.id))
+        h = self.DigitalOcean_credentials()
+        vmidURL = self.provider_id.api_url+ str('/') + str(self.providerID)
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code != 200:
+            _logger.info(_("Error getting VM data: %s%s") % (r.status_code, r.text))
+            return
+        theJSON = json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "off":
+                _logger.info(_("Status not off yet: %s") % theJSON["droplet"]["status"])
+                return
+        else:
+            _logger.info(_("Unexpected data."))
+            return
+        self.write({'server_status_id': constants.STOPPED})
+        _logger.info('Ok')
+        return
+
+
+    ##
+    # DigitalOcean_HasServerStarted
+    #   check provider to see if VM is up and running
+    #   if it is change status to active
+    def DigitalOcean_HasServerStarted(self):
+        _logger.info('server id: ' + str(self.id))
+        h = self.DigitalOcean_credentials()
+        vmidURL = self.provider_id.api_url+ str('/') + str(self.providerID)
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code != 200:
+            _logger.info(_("Error getting VM data: %s%s") % (r.status_code, r.text))
+            return
+        theJSON = json.loads(r.text)
+        if "status" in theJSON["droplet"]:
+            if theJSON["droplet"]["status"] != "active":
+                _logger.info(_("Status not active yet: %s") % theJSON["droplet"]["status"])
+                return
+        else:
+            _logger.info(_("Unexpected data."))
+            return
+        self.write({'server_status_id': constants.ACTIVE})
+        _logger.info('Ok')
+        return
+
+
+    ##
+    # GoogleComputeEngine_HasServerStopped
+    #   check provider to see if VM has been stopped
+    #   if it is change status to stopped
+    def GoogleComputeEngine_HasServerStopped(self):
+
+        _logger.info('server id: ' + str(self.id))
+
+        h = self.GoogleComputeEngine_credentials()
+
+        api_template = Template(self.provider_id.api_url)
+        api_cooked = api_template.safe_substitute(
+            zone=self.zone_id.slug,
+            project=self.provider_id.api_user,
+        )
+        vmidURL = api_cooked + str('/') + str(self.name)
+
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code != 200:
+            _logger.info('requests.get error: ' + str(r.status_code) + ' ' + str(r.text))
+        theJSON = json.loads(r.text)
+        if "status" in theJSON:
+            if theJSON["status"] != "TERMINATED":
+                _logger.info(_("Status not stopped yet: %s") % theJSON["status"])
+                return
+        else:
+            _logger.info(_("Unexpected data."))
+            return
+        self.write({'server_status_id': constants.STOPPED})
+        _logger.info('Ok')
+        return
+
+
+    ##
+    # GoogleComputeEngine_HasServerStarted
+    #   check provider to see if VM has been stopped
+    #   if it is change status to stopped
+    def GoogleComputeEngine_HasServerStarted(self):
+
+        _logger.info('server id: ' + str(self.id))
+
+        h = self.GoogleComputeEngine_credentials()
+
+        api_template = Template(self.provider_id.api_url)
+        api_cooked = api_template.safe_substitute(
+            zone=self.zone_id.slug,
+            project=self.provider_id.api_user,
+        )
+        vmidURL = api_cooked + str('/') + str(self.name)
+
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code != 200:
+            _logger.info('requests.get error: ' + str(r.status_code) + ' ' + str(r.text))
+        theJSON = json.loads(r.text)
+        if "status" in theJSON:
+            if theJSON["status"] != "RUNNING":
+                _logger.info(_("Status not started yet: %s") % theJSON["status"])
+                return
+        else:
+            _logger.info(_("Unexpected data."))
+            return
+        self.write({'server_status_id': constants.ACTIVE})
+        _logger.info('Ok')
+        return
+
+    ##
+    # DigitalOcean_HasServerBeenDestroyed
+    #   check provider to see if VM is up and running
+    #   if it is change status to active
+    def DigitalOcean_HasServerBeenDestroyed(self):
+        _logger.info('server id: ' + str(self.id))
+        h = self.DigitalOcean_credentials()
+        vmidURL = self.provider_id.api_url+ str('/') + str(self.providerID)
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code == 200:
+            _logger.info(_("Not destroyed yet."))
+            return
+        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'ipv4': '', 'state': 'ready'})
+        _logger.info('Ok')
+        return
+
+
+    ##
+    # GoogleComputeEngine_HasServerBeenDestroyed
+    #   check provider to see if VM has been stopped
+    #   if it is change status to stopped
+    def GoogleComputeEngine_HasServerBeenDestroyed(self):
+
+        _logger.info('server id: ' + str(self.id))
+
+        h = self.GoogleComputeEngine_credentials()
+
+        api_template = Template(self.provider_id.api_url)
+        api_cooked = api_template.safe_substitute(
+            zone=self.zone_id.slug,
+            project=self.provider_id.api_user,
+        )
+        vmidURL = api_cooked + str('/') + str(self.name)
+
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code == 200:
+                _logger.info(_("Not destroyed yet."))
+                return
+        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'ipv4': '', 'state': 'ready'})
+        _logger.info('Ok')
+        return
+
+
     ##
     # DigitalOcean_HasServerDeployed
     #   check provider to see if VM is up and running
@@ -412,6 +570,22 @@ class CloudmanagerServer(models.Model):
 
 
     ##
+    # HasServerBeenDestroyed
+    #   This method is to be called from scheduled actions subsystem
+    @api.model
+    def HasServerBeenDestroyed(self):
+        _logger.info('start HasServerBeenDestroyed')
+        servers = self.search([('server_status_id', '=', constants.WAITING_FOR_DESTROY)])   
+        for server in servers:
+            if server.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
+                server.GoogleComputeEngine_HasServerBeenDestroyed()
+            elif server.provider_id.id == constants.DIGITAL_OCEAN:
+                server.DigitalOcean_HasServerBeenDestroyed()
+        _logger.info('end HasServerBeenDestroyed')
+        return True
+
+
+    ##
     # HasServerDeployed
     #   This method is to be called from scheduled actions subsystem
     @api.model
@@ -424,6 +598,38 @@ class CloudmanagerServer(models.Model):
             elif server.provider_id.id == constants.DIGITAL_OCEAN:
                 server.DigitalOcean_HasServerDeployed()
         _logger.info('end HasServerDeployed')
+        return True
+
+
+    ##
+    # HasServerStopped
+    #   This method is to be called from scheduled actions subsystem
+    @api.model
+    def HasServerStopped(self):
+        _logger.info('start HasServerStopped')
+        servers = self.search([('server_status_id', '=', constants.WAITING_FOR_STOP)])   
+        for server in servers:
+            if server.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
+                server.GoogleComputeEngine_HasServerStopped()
+            elif server.provider_id.id == constants.DIGITAL_OCEAN:
+                server.DigitalOcean_HasServerStopped()
+        _logger.info('end HasServerStopped')
+        return True
+
+
+    ##
+    # HasServerStarted
+    #   This method is to be called from scheduled actions subsystem
+    @api.model
+    def HasServerStarted(self):
+        _logger.info('start HasServerStarted')
+        servers = self.search([('server_status_id', '=', constants.WAITING_FOR_START)])   
+        for server in servers:
+            if server.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
+                server.GoogleComputeEngine_HasServerStarted()
+            elif server.provider_id.id == constants.DIGITAL_OCEAN:
+                server.DigitalOcean_HasServerStarted()
+        _logger.info('end HasServerStarted')
         return True
 
 
@@ -445,7 +651,7 @@ class CloudmanagerServer(models.Model):
         if r.status_code != 204 and r.status_code != 200:
             raise ValidationError("Error destroyvm: "+str(r.status_code)+r.text)
         # initial setup server status. ready state. remove IP and ID.
-        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'ipv4': '', 'state': 'ready'})
+        self.write({'server_status_id': constants.WAITING_FOR_DELETE})
         return True
 
 
@@ -467,7 +673,7 @@ class CloudmanagerServer(models.Model):
         if r.status_code != 204:
             raise ValidationError("Error destroyvm: "+str(r.status_code)+r.text)
         # initial setup server status. ready state. remove IP and ID.
-        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'ipv4': '', 'state': 'ready'})
+        self.write({'server_status_id': constants.WAITING_FOR_DELETE})
         return True
 
 
@@ -489,7 +695,7 @@ class CloudmanagerServer(models.Model):
         if r.status_code != 200:
             raise ValidationError("Error stopvm: "+str(r.status_code)+r.text)
         # initial setup server status. ready state. remove IP and ID.
-        self.write({'server_status_id': constants.STOPPED,'state': 'deployedStopped'})
+        self.write({'server_status_id': constants.WAITING_FOR_STOP,'state': 'deployedStopped'})
         return True
 
 
@@ -517,18 +723,6 @@ class CloudmanagerServer(models.Model):
             raise ValidationError("Error stopvm: "+str(r.status_code)+r.text)
         # waiting for stop server status. deplyed stopped state.
         self.write({'server_status_id':constants.WAITING_FOR_STOP, 'state': 'deployedStopped'})
-        # wait and check for status change, this is only for development testing
-        time.sleep(20)
-        vmidURL=self.provider_id.api_url+str('/')+self.providerID
-        r = requests.get(vmidURL,headers=h)
-        if r.status_code != 200:
-            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
-        theJSON=json.loads(r.text)
-        if "status" in theJSON["droplet"]:
-            if theJSON["droplet"]["status"] != "off":
-                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
-        # stopped
-        self.write({'server_status_id':constants.STOPPED})
         return True
 
 
@@ -550,7 +744,7 @@ class CloudmanagerServer(models.Model):
         if r.status_code != 200:
             raise ValidationError("Error startvm: "+str(r.status_code)+r.text)
         # initial setup server status. ready state. remove IP and ID.
-        self.write({'server_status_id': constants.ACTIVE,'state': 'deployedActive'})
+        self.write({'server_status_id': constants.WAITING_FOR_START,'state': 'deployedActive'})
         return True
 
 
@@ -574,18 +768,6 @@ class CloudmanagerServer(models.Model):
             raise ValidationError("Error startvm: "+str(r.status_code)+r.text)
         # waiting for start server/reboot status. deployed active state.
         self.write({'server_status_id':constants.WAITING_FOR_START, 'state': 'deployedActive'})
-        # wait and check for status change, this is only for development testing
-        time.sleep(20)
-        vmidURL=self.provider_id.api_url+str('/')+self.providerID
-        r = requests.get(vmidURL,headers=h)
-        if r.status_code != 200:
-            raise ValidationError("Error getting VM data: "+str(r.status_code)+r.text)
-        theJSON=json.loads(r.text)
-        if "status" in theJSON["droplet"]:
-            if theJSON["droplet"]["status"] != "active":
-                raise ValidationError("Error unexpected provider server status: "+theJSON["droplet"]["status"])
-        # active
-        self.write({'server_status_id': '2'})
         return True
 
 
