@@ -202,6 +202,32 @@ class CloudmanagerServer(models.Model):
         self.write({'state': 'ready'})
         return True
 
+    ##
+    # DigitalOcean__credentials
+    #   Get a valid bearer token for Digital Ocean OAuth2
+    #   And return request header
+    def DigitalOcean_credentials(self):
+        Authorization = "Bearer " + str(self.provider_id.api_password)
+        Header = {
+            "Content-Type": "application/json", "Authorization": Authorization
+        }
+        return Header
+
+    ##
+    # GoogleComputeEngine_credentials
+    #   Get a valid bearer token for Google OAuth2
+    #   And return request header
+    def GoogleComputeEngine_credentials(self):
+        scopes = ['https://www.googleapis.com/auth/compute']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
+        credentials.refresh_token = self.provider_id.api_password
+        credentials.refresh(Http())
+        Authorization = "Bearer " + str(credentials.access_token)
+        Header = {
+            "Content-Type": "application/json", "Authorization": Authorization
+        }
+        return Header
+
 
     ##
     # GoogleComputeEngine_deployvm
@@ -210,14 +236,7 @@ class CloudmanagerServer(models.Model):
     def GoogleComputeEngine_deployvm(self):
         if not self.provider_id.api_user:
             raise ValidationError("Error deployvm: provider api_user is required for project name")
-        scopes = ['https://www.googleapis.com/auth/compute']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
-        credentials.refresh_token = self.provider_id.api_password
-        credentials.refresh(Http())
-        Authorization = "Bearer " + str(credentials.access_token)
-        h = {
-            "Content-Type": "application/json", "Authorization": Authorization
-        }
+        h = self.GoogleComputeEngine_credentials()
         t = Template(self.provider_id.create_template)
         d = t.safe_substitute(
             name=self.name,
@@ -246,26 +265,6 @@ class CloudmanagerServer(models.Model):
             'server_status_id': constants.WAITING_FOR_DEPLOYMENT,
             'providerID': vmid
         })
-
-        # This will be changed shortly to use the callback scheduled actions function
-        time.sleep(20)
-        vmidURL = api_cooked + str('/') + str(self.name)
-        r = requests.get(vmidURL, headers=h)
-        if r.status_code != 200:
-            raise ValidationError(_(
-                "Error getting VM data: %s%s") % (r.status_code, r.text))
-        theJSON = json.loads(r.text)
-        cipv4 = False
-        if "networkInterfaces" in theJSON:
-            for i in theJSON["networkInterfaces"]:
-                for j in i["accessConfigs"]:
-                    cipv4 = j["natIP"]
-                    break
-        if not cipv4:
-            raise ValidationError(_("Error no ipv4: %s") % theJSON["networkInterfaces"])
-        self.write({
-            'server_status_id': constants.ACTIVE,
-            'ipv4': cipv4})
         return True
 
 
@@ -274,10 +273,7 @@ class CloudmanagerServer(models.Model):
     #   Uses Digitial Ocean v2 API to deploy a VM
     @api.multi
     def DigitalOcean_deployvm(self):
-        Authorization = "Bearer " + str(self.provider_id.api_password)
-        h = {
-            "Content-Type": "application/json", "Authorization": Authorization
-        }
+        h = self.DigitalOcean_credentials()
         t = Template(self.provider_id.create_template)
         d = t.safe_substitute(
             name=self.server_fqdn,
@@ -375,41 +371,73 @@ class CloudmanagerServer(models.Model):
     # DigitalOcean_HasServerDeployed
     #   check provider to see if VM is up and running
     #   if it is change status to active
-    @api.multi
     def DigitalOcean_HasServerDeployed(self):
+        _logger.info('server id: ' + str(self.id))
         return True
 
+    ##
+    # GoogleComputeEngine_header2
+    @api.multi
+    def GoogleComputeEngine_header2(self):
+        scopes = ['https://www.googleapis.com/auth/compute']
+        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
+        credentials.refresh_token = self.provider_id.api_password
+        credentials.refresh(Http())
+        Authorization = "Bearer " + str(credentials.access_token)
+        h = {
+            "Content-Type": "application/json", "Authorization": Authorization
+        }
+        return h
 
     ##
     # GoogleComputeEngine_HasServerDeployed
-    @api.multi
+    #   Provider specific status check to see if server has actually deployed
     def GoogleComputeEngine_HasServerDeployed(self):
-        return True
+
+        _logger.info('server id: ' + str(self.id))
+
+        h = self.GoogleComputeEngine_header2
+
+        api_template = Template(self.provider_id.api_url)
+        api_cooked = api_template.safe_substitute(
+            zone=self.zone_id.slug,
+            project=self.provider_id.api_user,
+        )
+        vmidURL = api_cooked + str('/') + str(self.name)
+
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code != 200:
+            _logger.info('requests.get error: ' + str(r.status_code) + ' ' + str(r.text))
+        theJSON = json.loads(r.text)
+        cipv4 = False
+        if "networkInterfaces" in theJSON:
+            for i in theJSON["networkInterfaces"]:
+                for j in i["accessConfigs"]:
+                    cipv4 = j["natIP"]
+                    break
+        if not cipv4:
+            _logger.info('No cipv4')
+            return
+        self.write({
+            'server_status_id': constants.ACTIVE,
+            'ipv4': cipv4})
+        _logger.info('Ok ' + str(cipv4))
+        return
 
 
     ##
     # HasServerDeployed
     #   This method is to be called from scheduled actions subsystem
-    def HasServerDeployed(self, cr, uid, context=None):
-
-        _logger.info('start')
-
-        server_obj = self.pool.get('cloudmanager.server')
-        # find out how to restrict to a search set from Juan
-        server_ids = self.pool.get('cloudmanager.server').search(cr, uid, [])   
-        for server_id in server_ids :
-            line = server_obj.browse(cr, uid,server_id ,context=context)
-            _logger.info('provider_id: ' + line.provider_id)
-        
-        return True
-
-        if self.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
-            self.GoogleComputeEngine_HasServerDeployed()
-        elif self.provider_id.id == constants.DIGITAL_OCEAN:
-            self.DigitalOcean_HasServerDeployed()
-
-        _logger.info('end')
-
+    @api.model
+    def HasServerDeployed(self):
+        _logger.info('start HasServerDeployed')
+        servers = self.search([('server_status_id', '=', constants.WAITING_FOR_DEPLOYMENT)])   
+        for server in servers:
+            if server.provider_id.id == constants.GOOGLE_COMPUTE_ENGINE:
+                server.GoogleComputeEngine_HasServerDeployed()
+            elif server.provider_id.id == constants.DIGITAL_OCEAN:
+                server.DigitalOcean_HasServerDeployed()
+        _logger.info('end HasServerDeployed')
         return True
 
 
@@ -420,14 +448,7 @@ class CloudmanagerServer(models.Model):
     def GoogleComputeEngine_destroyvm(self):
         if not self.provider_id.api_user:
             raise ValidationError("Error destroyvm: provider api_user is required for project name")
-        scopes = ['https://www.googleapis.com/auth/compute']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
-        credentials.refresh_token = self.provider_id.api_password
-        credentials.refresh(Http())
-        Authorization = "Bearer " + str(credentials.access_token)
-        h = {
-            "Content-Type": "application/json", "Authorization": Authorization
-        }
+        h = self.GoogleComputeEngine_credentials()
         api_template = Template(self.provider_id.api_url)
         api_cooked = api_template.safe_substitute(
             zone=self.zone_id.slug,
@@ -447,8 +468,7 @@ class CloudmanagerServer(models.Model):
     #   uses Digital Ocean v2 API to remove/delete/destroy a VM
     @api.multi
     def DigitalOcean_destroyvm(self):
-        Authorization = "Bearer " + str(self.provider_id.api_password)
-        h = {"Content-Type": "application/json","Authorization": Authorization}
+        h = self.DigitalOcean_credentials()
         vmidURL=self.provider_id.api_url+str('/')+self.providerID
         r = requests.get(vmidURL,headers=h)
         if r.status_code != 200:
@@ -472,14 +492,7 @@ class CloudmanagerServer(models.Model):
     def GoogleComputeEngine_stopvm(self):
         if not self.provider_id.api_user:
             raise ValidationError("Error stopvm: provider api_user is required for project name")
-        scopes = ['https://www.googleapis.com/auth/compute']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
-        credentials.refresh_token = self.provider_id.api_password
-        credentials.refresh(Http())
-        Authorization = "Bearer " + str(credentials.access_token)
-        h = {
-            "Content-Type": "application/json", "Authorization": Authorization
-        }
+        h = self.GoogleComputeEngine_credentials()
         api_template = Template(self.provider_id.api_url)
         api_cooked = api_template.safe_substitute(
             zone=self.zone_id.slug,
@@ -499,8 +512,7 @@ class CloudmanagerServer(models.Model):
     #   uses Digital Ocean v2 API to stop a VM
     @api.multi
     def DigitalOcean_stopvm(self):
-        Authorization = "Bearer " + str(self.provider_id.api_password)
-        h = {"Content-Type": "application/json","Authorization": Authorization}
+        h = self.DigitalOcean_credentials()
         vmidURL=self.provider_id.api_url+str('/')+self.providerID
         r = requests.get(vmidURL,headers=h)
         if r.status_code != 200:
@@ -541,14 +553,7 @@ class CloudmanagerServer(models.Model):
     def GoogleComputeEngine_startvm(self):
         if not self.provider_id.api_user:
             raise ValidationError("Error startvm: provider api_user is required for project name")
-        scopes = ['https://www.googleapis.com/auth/compute']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
-        credentials.refresh_token = self.provider_id.api_password
-        credentials.refresh(Http())
-        Authorization = "Bearer " + str(credentials.access_token)
-        h = {
-            "Content-Type": "application/json", "Authorization": Authorization
-        }
+        h = self.GoogleComputeEngine_credentials()
         api_template = Template(self.provider_id.api_url)
         api_cooked = api_template.safe_substitute(
             zone=self.zone_id.slug,
@@ -568,8 +573,7 @@ class CloudmanagerServer(models.Model):
     #   uses Digital Ocean 2.0 API to start a VM
     @api.multi
     def DigitalOcean_startvm(self):
-        Authorization = "Bearer " + str(self.provider_id.api_password)
-        h = {"Content-Type": "application/json","Authorization": Authorization}
+        h = self.DigitalOcean_credentials()
         vmidURL=self.provider_id.api_url+str('/')+self.providerID
         r = requests.get(vmidURL,headers=h)
         if r.status_code != 200:
