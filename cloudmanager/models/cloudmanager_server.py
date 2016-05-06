@@ -302,27 +302,6 @@ class CloudmanagerServer(models.Model):
         # end request VM creation
         ##
 
-        # THIS WILL BE CHANGED to use the Odoo automation scheduling table
-        time.sleep(20)
-        vmidURL = self.provider_id.api_url+ str('/') + str(vmid)
-        r = requests.get(vmidURL, headers=h)
-        if r.status_code != 200:
-            raise ValidationError(_(
-                "Error getting VM data: %s%s") % (r.status_code, r.text))
-        theJSON = json.loads(r.text)
-        if (
-                "networks" in theJSON["droplet"] and
-                "v4" in theJSON["droplet"]["networks"]):
-            for i in theJSON["droplet"]["networks"]["v4"]:
-                cipv4 = i["ip_address"]
-                break
-        if not cipv4:
-            raise ValidationError(_("Error no ipv4: %s") % theJSON["droplet"]["networks"])
-        self.write({
-            'server_status_id': constants.ACTIVE,
-            'ipv4': cipv4})
-        return True
-
 
     ##
     # deployvm
@@ -373,21 +352,28 @@ class CloudmanagerServer(models.Model):
     #   if it is change status to active
     def DigitalOcean_HasServerDeployed(self):
         _logger.info('server id: ' + str(self.id))
-        return True
 
-    ##
-    # GoogleComputeEngine_header2
-    @api.multi
-    def GoogleComputeEngine_header2(self):
-        scopes = ['https://www.googleapis.com/auth/compute']
-        credentials = ServiceAccountCredentials.from_json_keyfile_name('/mnt/extra-addons/odoo-infrastructure/cloudmanager/gcekey.json', scopes=scopes)
-        credentials.refresh_token = self.provider_id.api_password
-        credentials.refresh(Http())
-        Authorization = "Bearer " + str(credentials.access_token)
-        h = {
-            "Content-Type": "application/json", "Authorization": Authorization
-        }
-        return h
+        h = self.DigitalOcean_credentials()
+        vmidURL = self.provider_id.api_url+ str('/') + str(self.providerID)
+        r = requests.get(vmidURL, headers=h)
+        if r.status_code != 200:
+            _logger.info(_("Error getting VM data: %s%s") % (r.status_code, r.text))
+            return
+        theJSON = json.loads(r.text)
+        if (
+                "networks" in theJSON["droplet"] and
+                "v4" in theJSON["droplet"]["networks"]):
+            for i in theJSON["droplet"]["networks"]["v4"]:
+                cipv4 = i["ip_address"]
+                break
+        if not cipv4:
+            _logger.info(_("Error no ipv4: %s") % theJSON["droplet"]["networks"])
+            return
+        self.write({
+            'server_status_id': constants.ACTIVE,
+            'ipv4': cipv4})
+        _logger.info('Ok ' + str(cipv4))
+        return
 
     ##
     # GoogleComputeEngine_HasServerDeployed
@@ -396,7 +382,7 @@ class CloudmanagerServer(models.Model):
 
         _logger.info('server id: ' + str(self.id))
 
-        h = self.GoogleComputeEngine_header2
+        h = self.GoogleComputeEngine_credentials()
 
         api_template = Template(self.provider_id.api_url)
         api_cooked = api_template.safe_substitute(
@@ -459,7 +445,7 @@ class CloudmanagerServer(models.Model):
         if r.status_code != 204 and r.status_code != 200:
             raise ValidationError("Error destroyvm: "+str(r.status_code)+r.text)
         # initial setup server status. ready state. remove IP and ID.
-        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'IPv4': '', 'state': 'ready'})
+        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'ipv4': '', 'state': 'ready'})
         return True
 
 
@@ -481,7 +467,7 @@ class CloudmanagerServer(models.Model):
         if r.status_code != 204:
             raise ValidationError("Error destroyvm: "+str(r.status_code)+r.text)
         # initial setup server status. ready state. remove IP and ID.
-        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'IPv4': '', 'state': 'ready'})
+        self.write({'server_status_id':constants.INITIAL_SETUP, 'providerID': '', 'ipv4': '', 'state': 'ready'})
         return True
 
 
